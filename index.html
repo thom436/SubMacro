@@ -5,11 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Subway Calc</title>
 
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥪</text></svg>">
+<link rel="icon" href="data:image/svg+xml,
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'>
+  <rect width='180' height='180' rx='40' fill='#34c759'/>
+  <text x='50%' y='58%' text-anchor='middle' font-size='90'>🥪</text>
+</svg>">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Subway Calc">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 180%22><text y=%221.2em%22 font-size=%22120%22>🥪</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'>
+  <rect width='180' height='180' rx='40' fill='#34c759'/>
+  <text x='50%' y='58%' text-anchor='middle' font-size='90'>🥪</text>
+</svg>">
 
 <style>
 body {
@@ -128,20 +136,14 @@ select:disabled {
 
 <!-- 加料 -->
 <div class="card">
-<label>
-<span>加料</span>
-<input type="checkbox" id="addonToggle" class="toggle" onchange="toggleAddon(this)" checked>
-</label>
+<label>加料</label>
 <select id="addon1" disabled onchange="calc()"></select>
 <select id="addon2" disabled onchange="calc()"></select>
 </div>
 
 <!-- 醬料 -->
 <div class="card">
-<label>
-<span>醬料（可選兩種，各半）</span>
-<input type="checkbox" id="sauceToggle" class="toggle" onchange="toggleSauce(this)" checked>
-</label>
+<label>醬料（可選兩種，各半）</label>
 <select id="sauce1" disabled onchange="calc()"></select>
 
 <label style="margin-top:10px;">
@@ -284,21 +286,6 @@ document.getElementById("sauce2").disabled = true
 calc()
 }
 
-function toggleAddon(cb){
-  document.getElementById("addon1").disabled = !cb.checked
-  document.getElementById("addon2").disabled = !cb.checked
-  calc()
-}
-
-function toggleSauce(cb){
-  const enabled = cb.checked
-  document.getElementById("sauce1").disabled = !enabled
-
-  document.getElementById("sauce2Toggle").checked = false
-  document.getElementById("sauce2").disabled = true
-
-  calc()
-}
 
 function toggleSauce2(cb){
   document.getElementById("sauce2").disabled = !cb.checked
@@ -323,33 +310,27 @@ total.protein += data.addon[main].protein
 }
 }
 
-let addonEnabled = document.getElementById("addonToggle").checked
 let addon1 = document.getElementById("addon1").value
 let addon2 = document.getElementById("addon2").value
 
-if(addonEnabled){
-  if(addon1){
-    total.cal += data.addon[addon1].cal
-    total.protein += data.addon[addon1].protein
-  }
-  if(addon2){
-    total.cal += data.addon[addon2].cal
-    total.protein += data.addon[addon2].protein
-  }
+if(addon1){
+  total.cal += data.addon[addon1].cal
+  total.protein += data.addon[addon1].protein
+}
+if(addon2){
+  total.cal += data.addon[addon2].cal
+  total.protein += data.addon[addon2].protein
 }
 
-let sauceEnabled = document.getElementById("sauceToggle").checked
 let sauce1 = document.getElementById("sauce1").value
 let sauce2Enabled = document.getElementById("sauce2Toggle").checked
 let sauce2 = document.getElementById("sauce2").value
 
-if(sauceEnabled){
-  if(sauce1){
-    total.cal += data.sauce[sauce1].cal / (sauce2Enabled ? 2 : 1)
-  }
-  if(sauce2Enabled && sauce2){
-    total.cal += data.sauce[sauce2].cal / 2
-  }
+if(sauce1){
+  total.cal += data.sauce[sauce1].cal / (sauce2Enabled ? 2 : 1)
+}
+if(sauce2Enabled && sauce2){
+  total.cal += data.sauce[sauce2].cal / 2
 }
 
 document.getElementById("result").innerHTML =

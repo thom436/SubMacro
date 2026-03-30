@@ -75,9 +75,9 @@ body {
 }
 
 label {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   color: #1c1c1e;
   display: flex;
   justify-content: space-between;
@@ -92,7 +92,7 @@ select {
   border: 1px solid #e5e5ea;
   background: #f9f9f9;
   color: #000;
-  font-size: 16px;
+  font-size: 17px;
   appearance: none;
   -webkit-appearance: none;
   position: relative;
@@ -100,6 +100,9 @@ select {
   font-weight: 400;
   transition: all 0.15s ease;
   cursor: pointer;
+}
+select option {
+  font-size: 17px;
 }
 select {
   background-image: url("data:image/svg+xml;utf8,<svg fill='%238e8e93' height='20' viewBox='0 0 20 20' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M5 7l5 5 5-5z'/></svg>");
@@ -191,10 +194,11 @@ input[type="checkbox"]:active::after {
 <!-- 主餐 -->
 <div class="card">
 <div style="display:flex;justify-content:space-between;align-items:center;">
-  <div>
-    <div>6吋潛艇堡</div>
-    <div style="color:#8e8e93;font-size:13px;font-weight:400;">6" Sandwich</div>
-  </div>
+<div>
+  <div>6吋潛艇堡</div>
+  <div style="color:#8e8e93;font-size:13px;font-weight:400;">6" Sandwich</div>
+  <div style="color:#aeaeb2;font-size:12px;font-weight:400;">Protein efficiency first</div>
+</div>
   <div style="display:flex;align-items:center;gap:8px;">
     <span style="font-size:14px;color:#666;">雙份肉</span>
     <input type="checkbox" id="double" onchange="calc()" checked>

@@ -661,7 +661,10 @@ function addAddon(defaultValue = ""){
   }
 
   container.appendChild(wrapper)
-  wrapper.querySelector("select").focus()
+  // only auto focus when user manually adds
+  if (!defaultValue) {
+    wrapper.querySelector("select").focus()
+  }
   updateAddonUI();
 }
 

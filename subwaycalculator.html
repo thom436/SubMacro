@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: sans-serif; padding: 20px; }
+.section { margin-top: 20px; }
+.result { margin-top: 20px; font-size: 18px; color: red; }
+select, input { margin-top: 5px; }
+</style>
+</head>
+
+<body>
+
+<h2>Subway 計算機</h2>
+
+<!-- 主餐 -->
+<div class="section">
+<h3>口味</h3>
+<select id="main" onchange="calc()"></select>
+</div>
+
+<!-- 雙倍肉 -->
+<div class="section">
+<label><input type="checkbox" id="double" onchange="calc()"> 雙倍肉量</label>
+</div>
+
+<!-- 加料 -->
+<div class="section">
+<h3>加料</h3>
+
+<label>
+<input type="checkbox" onchange="toggleAddon(this)"> 啟用
+</label>
+<select id="addon" disabled onchange="calc()"></select>
+
+</div>
+
+<!-- 醬料 -->
+<div class="section">
+<h3>醬料</h3>
+<select id="sauce" onchange="calc()"></select>
+</div>
+
+<!-- 結果 -->
+<div class="result" id="result"></div>
+
+<script>
+
+// ===== 資料庫 =====
+const data = {
+
+main:{
+"照燒雞肉":{cal:362,protein:27},
+"厚切嫩牛":{cal:366,protein:26},
+"鮮嫩雞柳":{cal:324,protein:25},
+"香烤雞肉":{cal:331,protein:23},
+"鮪魚":{cal:507,protein:22},
+"義大利經典":{cal:409,protein:22},
+"燒烤牛肉":{cal:346,protein:21},
+"百味俱樂部":{cal:325,protein:21},
+"義大利牛肉丸":{cal:383,protein:20},
+"嫩切雞肉":{cal:300,protein:20},
+"火腿":{cal:317,protein:19},
+"哈燒起司總匯":{cal:321,protein:18},
+"蛋沙拉":{cal:421,protein:17},
+"墨西哥辣牛":{cal:320,protein:17},
+"鷹嘴豆泥餅":{cal:425,protein:16},
+"墨西哥手撕豬":{cal:321,protein:16},
+"素食蔬菜":{cal:250,protein:10}
+},
+
+addon:{
+"鮮嫩雞柳":{cal:74,protein:15},
+"嫩切雞肉(3片)":{cal:50,protein:10},
+"嫩切雞肉(1片)":{cal:17,protein:3},
+"香烤雞肉":{cal:81,protein:13},
+"照燒雞肉":{cal:112,protein:17},
+"百味俱樂部":{cal:75,protein:10},
+"厚切嫩牛":{cal:100,protein:13},
+"燒烤牛肉(1片/19.5g)":{cal:32,protein:4},
+"嫩煎蛋(1片)":{cal:41,protein:5},
+"火腿(4片)":{cal:67,protein:8},
+"火腿(1片)":{cal:17,protein:2},
+"辣豆瓣嫩牛":{cal:157,protein:18},
+"燒烤牛肉(3片/59g)":{cal:96,protein:11},
+"哈燒起司總匯":{cal:71,protein:8},
+"墨西哥辣牛":{cal:70,protein:7},
+"培根(1條)":{cal:24,protein:2},
+"墨西哥手撕豬":{cal:118,protein:9},
+"義大利經典":{cal:159,protein:12},
+"義大利牛肉丸":{cal:133,protein:10},
+"切絲巧達起司":{cal:55,protein:3.3},
+"英式切片起司(2片)":{cal:39,protein:2.3},
+"義式辣香腸(1片)":{cal:18,protein:1},
+"義式煙燻臘腸(1片)":{cal:20,protein:1},
+"鮪魚":{cal:257,protein:12},
+"酪梨泥(1球)":{cal:24,protein:1},
+"蛋沙拉(1球)":{cal:86,protein:3.3},
+"蛋沙拉(2球)":{cal:171,protein:6.5},
+"鷹嘴豆泥餅(1顆)":{cal:58,protein:2},
+"鷹嘴豆泥餅(3顆)":{cal:175,protein:6}
+},
+
+sauce:{
+"不加":{cal:0},
+"千島醬":{cal:36.7},
+"紅酒醋":{cal:0.3},
+"美乃滋":{cal:100},
+"甜蔥醬":{cal:33},
+"鄉村醬":{cal:74},
+"黃芥末":{cal:9},
+"義大利油醋醬":{cal:14.8},
+"蜂蜜芥末醬":{cal:21},
+"墨西哥西南醬":{cal:66},
+"橄欖油":{cal:44}
+}
+
+}
+
+// ===== 初始化 dropdown =====
+function init(){
+let main = document.getElementById("main")
+main.innerHTML = '<option value="">請選擇</option>'
+Object.keys(data.main).forEach(i=>{
+main.innerHTML += `<option>${i}</option>`
+})
+
+let addon = document.getElementById("addon")
+addon.innerHTML = '<option value="">選擇加料</option>'
+Object.keys(data.addon).forEach(i=>{
+addon.innerHTML += `<option>${i}</option>`
+})
+
+let sauce = document.getElementById("sauce")
+Object.keys(data.sauce).forEach(i=>{
+sauce.innerHTML += `<option>${i}</option>`
+})
+}
+
+// ===== 控制加料開關 =====
+function toggleAddon(cb){
+document.getElementById("addon").disabled = !cb.checked
+calc()
+}
+
+// ===== 核心計算 =====
+function calc(){
+let total = {cal:0, protein:0}
+
+// 主餐
+let main = document.getElementById("main").value
+if(main){
+total.cal += data.main[main].cal
+total.protein += data.main[main].protein
+}
+
+// 雙倍肉（XLOOKUP）
+if(document.getElementById("double").checked && main){
+if(data.addon[main]){
+total.cal += data.addon[main].cal
+total.protein += data.addon[main].protein
+}
+}
+
+// 加料
+let addon = document.getElementById("addon").value
+if(addon){
+total.cal += data.addon[addon].cal
+total.protein += data.addon[addon].protein
+}
+
+// 醬料
+let sauce = document.getElementById("sauce").value
+if(sauce){
+total.cal += data.sauce[sauce].cal
+}
+
+// 顯示
+document.getElementById("result").innerHTML =
+`卡路里: ${total.cal} kcal<br>蛋白質: ${total.protein} g`
+}
+
+init()
+
+</script>
+
+</body>
+</html>

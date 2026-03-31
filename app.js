@@ -252,7 +252,7 @@ function runAfterTapSuppression(fn){
 }
 
 function openSauce1Picker(){
-  if(runAfterTapSuppression(openSauce1Picker)) return
+  if(runAfterTapSuppression(()=> openSaucePicker("sauce1"))) return
   openSaucePicker("sauce1")
 }
 
@@ -1197,13 +1197,12 @@ removeBtn.onclick = (e)=>{
   return wrapper
 }
 
-function addSauce2(){
-  if(runAfterTapSuppression(addSauce2)) return
+function addSauce2Internal(){
   const container = document.getElementById("sauce2List")
   const existingRow = container.querySelector(".sauce-row")
   if(existingRow){
     if(existingRow.classList.contains("removing")){
-      setTimeout(addSauce2, 200)
+      setTimeout(()=> addSauce2Internal(), 200)
     }
     return
   }
@@ -1213,6 +1212,11 @@ function addSauce2(){
   updateSauce2Visibility()
 
   openSaucePicker("sauce2")
+}
+
+function addSauce2(){
+  if(runAfterTapSuppression(()=> addSauce2Internal())) return
+  addSauce2Internal()
 }
 
 function removeSauce1(){

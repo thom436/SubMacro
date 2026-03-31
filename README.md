@@ -3,11 +3,11 @@
 Mobile-first Subway-style nutrition calculator with iOS-inspired UI.  
 以手機體驗為核心、帶有 iOS 風格互動的 Subway 營養計算工具。
 
-## 🚀 Live Demo
+## 🚀 Live Demo / 線上版本
 
 https://thom436.github.io/sandwichcalculator.com/
 
-## ✨ Features
+## ✨ Features / 功能特色
 
 - Flavor picker with grouped modal list + kcal hints  
   主餐口味使用分組彈窗清單，可直接看到各口味熱量
@@ -27,32 +27,47 @@ https://thom436.github.io/sandwichcalculator.com/
 - Dark mode + iOS-like motion feedback  
   深色模式與按鈕/切換動畫，提升操作手感
 
-## 🧮 Calculation Rules
+## 🧮 Calculation Rules / 計算規則
 
-- Base: selected 6" sandwich
-- Double meat: adds corresponding add-on nutrition (if available)
-- Add-ons: summed by selected items
-- Sauces:
-  - 1 sauce: full sauce kcal
-  - 2 sauces: each counted as 1/2
-  - No sauce: 0 kcal from sauces
+- Base: selected 6" sandwich  
+  基礎：以所選 6 吋主餐為基準
 
-## 🛠️ Tech
+- Double meat: adds corresponding add-on nutrition (if available)  
+  雙份肉：若有對應加料資料，會額外加上該品項營養值
 
-- Vanilla HTML / CSS / JavaScript
-- Static hosting via GitHub Pages
+- Add-ons: summed by selected items  
+  加料：依已選加料逐項加總
 
-## 📦 Local Development
+- Sauces:  
+  醬料：
+  - 1 sauce: full sauce kcal  
+    一種醬料：計入完整熱量
+  - 2 sauces: each counted as 1/2  
+    兩種醬料：各以 1/2 熱量計入
+  - No sauce: 0 kcal from sauces  
+    不加醬：醬料熱量為 0
 
-Open `index.html` directly in browser, or run a local static server.
+## 🛠️ Tech / 技術
 
-Example:
+- Vanilla HTML / CSS / JavaScript  
+  原生 HTML / CSS / JavaScript
+
+- Static hosting via GitHub Pages  
+  使用 GitHub Pages 靜態部署
+
+## 📦 Local Development / 本機開發
+
+Open `index.html` directly in browser, or run a local static server.  
+可直接用瀏覽器開啟 `index.html`，或使用本機靜態伺服器。
+
+Example / 範例：
 
 ```bash
 python3 -m http.server 8080
 ```
 
-Then visit `http://localhost:8080`.
+Then visit `http://localhost:8080`.  
+接著開啟 `http://localhost:8080`。
 
 ## ⚠️ Disclaimer / 聲明
 

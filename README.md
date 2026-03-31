@@ -36,4 +36,4 @@ Nutritional values are estimates and may vary.
 
 ## 🚀 Live Demo
 
-https://sandwichcalculator.com
+https://thom436.github.io/sandwichcalculator.com/

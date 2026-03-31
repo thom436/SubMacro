@@ -266,12 +266,14 @@ function openMainPicker(defaultGroup = ""){
   const modal = document.getElementById("mainModal")
   const catEl = document.getElementById("mainModalCategories")
   const itemsEl = document.getElementById("mainItems")
+  const searchEl = document.getElementById("mainSearch")
 
   if(!modal || !catEl || !itemsEl) return
 
   modal.style.display = "block"
   catEl.innerHTML = ""
   itemsEl.innerHTML = ""
+  if(searchEl) searchEl.value = ""
 
   const groupNames = Object.keys(mainGroups).filter(g => (mainGroups[g] || []).length > 0)
   if(!groupNames.length) return
@@ -305,14 +307,31 @@ function openMainPicker(defaultGroup = ""){
 
 function renderMainItems(group){
   const itemsEl = document.getElementById("mainItems")
+  const searchEl = document.getElementById("mainSearch")
   itemsEl.innerHTML = ""
   const selectedMain = document.getElementById("main").value
+  const query = searchEl ? searchEl.value.trim().toLowerCase() : ""
 
-  const sortedNames = [...(mainGroups[group] || [])]
+  const searchPool = query
+    ? Object.keys(data.main)
+    : (mainGroups[group] || [])
+
+  const sortedNames = [...searchPool]
     .filter(name => !!data.main[name])
+    .filter(name => {
+      if(!query) return true
+      const en = mainNameMap[name] || ""
+      return `${name} ${en}`.toLowerCase().includes(query)
+    })
     .sort((a,b)=> data.main[b].cal - data.main[a].cal)
 
   const recentMainNames = getRecentItems("main", Object.keys(data.main))
+    .filter(name => {
+      if(!query) return true
+      const en = mainNameMap[name] || ""
+      return `${name} ${en}`.toLowerCase().includes(query)
+    })
+  const showRecentShortcuts = !query && recentMainNames.length > 0
 
   const renderMainItem = (name)=>{
     if(!data.main[name]) return;
@@ -333,9 +352,9 @@ function renderMainItems(group){
 
     const meta = document.createElement("div")
     const efficiency = ((data.main[name].protein / data.main[name].cal) * 100).toFixed(1)
-    meta.innerHTML = `${data.main[name].cal} kcal<br><span style="font-size:11px;color:#8e8e93;">${efficiency}g/100kcal</span>`
+    meta.innerHTML = `${data.main[name].cal} kcal<br><span class="item-efficiency">${efficiency}g/100kcal</span>`
     meta.style.fontSize = "12px"
-    meta.style.color = "#8e8e93"
+    meta.style.color = "var(--kcal-muted)"
     meta.style.whiteSpace = "nowrap"
     meta.style.textAlign = "right"
     meta.style.lineHeight = "1.2"
@@ -369,27 +388,37 @@ function renderMainItems(group){
       saveRecentItem("main", name)
       updateMainPickerLabel()
       document.getElementById("mainModal").style.display="none"
-      shouldPopResultOnNextCalc = true
       calc()
     }
 
     itemsEl.appendChild(div)
   }
 
-  renderRecentShortcutSection(
-    itemsEl,
-    recentMainNames,
-    (name)=> name,
-    (name)=>{
-      const mainSelect = document.getElementById("main")
-      mainSelect.value = name
-      saveRecentItem("main", name)
-      updateMainPickerLabel()
-      document.getElementById("mainModal").style.display="none"
-      shouldPopResultOnNextCalc = true
-      calc()
-    }
-  )
+  if(!showRecentShortcuts && !sortedNames.length){
+    const empty = document.createElement("div")
+    empty.style.padding = "14px 12px"
+    empty.style.fontSize = "13px"
+    empty.style.color = "#8e8e93"
+    empty.textContent = query ? "找不到符合的口味 No matching flavor" : "此分類目前沒有項目"
+    itemsEl.appendChild(empty)
+    return
+  }
+
+  if(showRecentShortcuts){
+    renderRecentShortcutSection(
+      itemsEl,
+      recentMainNames,
+      (name)=> name,
+      (name)=>{
+        const mainSelect = document.getElementById("main")
+        mainSelect.value = name
+        saveRecentItem("main", name)
+        updateMainPickerLabel()
+        document.getElementById("mainModal").style.display="none"
+        calc()
+      }
+    )
+  }
 
   sortedNames.forEach(renderMainItem)
 }
@@ -498,15 +527,19 @@ function renderAddonItems(group){
   const selected = new Set(getSelectedAddonValues())
   const editingCurrentValue = addonPickerTargetHidden ? addonPickerTargetHidden.value : ""
   const query = searchEl ? searchEl.value.trim().toLowerCase() : ""
+  const searchPool = query
+    ? Object.keys(data.addon)
+    : (addonGroups[group] || []).filter(name => !!data.addon[name])
+
   const recentAddonNames = getRecentItems("addon", Object.keys(data.addon))
     .filter(name => {
       if(!query) return true
       const en = addonNameMap[name] || ""
       return `${name} ${en}`.toLowerCase().includes(query)
     })
+  const showRecentShortcuts = !query && recentAddonNames.length > 0
 
-  const sortedAddonNames = [...(addonGroups[group] || [])]
-    .filter(name => !!data.addon[name])
+  const sortedAddonNames = [...searchPool]
     .filter(name => {
       if(!query) return true
       const en = addonNameMap[name] || ""
@@ -514,7 +547,7 @@ function renderAddonItems(group){
     })
     .sort((a,b)=> data.addon[b].cal - data.addon[a].cal)
 
-  if(!recentAddonNames.length && !sortedAddonNames.length){
+  if(!showRecentShortcuts && !sortedAddonNames.length){
     const empty = document.createElement("div")
     empty.style.padding = "14px 12px"
     empty.style.fontSize = "13px"
@@ -544,7 +577,7 @@ function renderAddonItems(group){
     const meta = document.createElement("div")
     meta.textContent = `${data.addon[name].cal} kcal`
     meta.style.fontSize = "12px"
-    meta.style.color = "#8e8e93"
+    meta.style.color = "var(--kcal-muted)"
     meta.style.whiteSpace = "nowrap"
     const rightWrap = document.createElement("div")
     rightWrap.style.display = "flex"
@@ -584,24 +617,26 @@ function renderAddonItems(group){
     itemsEl.appendChild(div)
   }
 
-  renderRecentShortcutSection(
-    itemsEl,
-    recentAddonNames,
-    (name)=> name,
-    (name)=>{
-      if(addonPickerTargetRow){
-        setAddonValue(addonPickerTargetRow, name)
+  if(showRecentShortcuts){
+    renderRecentShortcutSection(
+      itemsEl,
+      recentAddonNames,
+      (name)=> name,
+      (name)=>{
+        if(addonPickerTargetRow){
+          setAddonValue(addonPickerTargetRow, name)
+          saveRecentItem("addon", name)
+          document.getElementById("addonModal").style.display = "none"
+          calc()
+          return
+        }
+        const added = addAddon(name)
+        if(!added) return
         saveRecentItem("addon", name)
         document.getElementById("addonModal").style.display = "none"
-        calc()
-        return
       }
-      const added = addAddon(name)
-      if(!added) return
-      saveRecentItem("addon", name)
-      document.getElementById("addonModal").style.display = "none"
-    }
-  )
+    )
+  }
 
   sortedAddonNames.forEach(renderAddonItem)
 }
@@ -870,11 +905,24 @@ function updateSaucePickerLabel(target = "sauce1"){
 
 function openSaucePicker(target = "sauce1"){
   const modal = document.getElementById("sauceModal")
-  const itemsEl = document.getElementById("sauceItems")
-  if(!modal || !itemsEl) return
+  if(!modal) return
 
+  saucePickerTarget = target
   modal.style.display = "block"
+  renderSauceItems()
+
+  modal.onclick = (e)=>{
+    if(e.target.id === "sauceModal") modal.style.display = "none"
+  }
+}
+
+function renderSauceItems(){
+  const itemsEl = document.getElementById("sauceItems")
+  if(!itemsEl) return
+
   itemsEl.innerHTML = ""
+
+  const target = saucePickerTarget
 
   const sauce1Value = document.getElementById("sauce1").value
   const sauce2ValueInput = document.querySelector('#sauce2List input[data-role="sauce-value"]')
@@ -882,11 +930,21 @@ function openSaucePicker(target = "sauce1"){
   const selectedValue = target === "sauce1" ? sauce1Value : sauce2Value
   const otherSauceValue = target === "sauce2" ? sauce1Value : sauce2Value
   const isBlocked = (name)=> !!otherSauceValue && name === otherSauceValue && name !== selectedValue
-
   const sortedSauceNames = Object.keys(data.sauce)
     .sort((a,b)=> data.sauce[b].cal - data.sauce[a].cal)
   const recentSauceNames = getRecentItems("sauce", sortedSauceNames)
     .filter(name => !isBlocked(name))
+  const showRecentShortcuts = recentSauceNames.length > 0
+
+  if(!showRecentShortcuts && !sortedSauceNames.length){
+    const empty = document.createElement("div")
+    empty.style.padding = "14px 12px"
+    empty.style.fontSize = "13px"
+    empty.style.color = "#8e8e93"
+    empty.textContent = "目前沒有可選醬料"
+    itemsEl.appendChild(empty)
+    return
+  }
   const renderSauceItem = (name)=>{
     const div = document.createElement("div")
     div.style.padding = "12px"
@@ -903,7 +961,7 @@ function openSaucePicker(target = "sauce1"){
     const meta = document.createElement("div")
     meta.textContent = `${data.sauce[name].cal} kcal`
     meta.style.fontSize = "12px"
-    meta.style.color = "#8e8e93"
+    meta.style.color = "var(--kcal-muted)"
     meta.style.whiteSpace = "nowrap"
     const rightWrap = document.createElement("div")
     rightWrap.style.display = "flex"
@@ -931,43 +989,44 @@ function openSaucePicker(target = "sauce1"){
       }
       saveRecentItem("sauce", name)
       updateSaucePickerLabel(target)
-      modal.style.display = "none"
+      document.getElementById("sauceModal").style.display = "none"
       calc()
     }
 
     itemsEl.appendChild(div)
   }
 
-  renderRecentShortcutSection(
-    itemsEl,
-    recentSauceNames,
-    (name)=> name,
-    (name)=>{
-      if(isBlocked(name)) return
-      if(target === "sauce1"){
-        document.getElementById("sauce1").value = name
-      } else {
-        const row = document.querySelector("#sauce2List .sauce-row")
-        const hidden = row ? row.querySelector('input[data-role="sauce-value"]') : null
-        if(hidden) hidden.value = name
+  if(showRecentShortcuts){
+    renderRecentShortcutSection(
+      itemsEl,
+      recentSauceNames,
+      (name)=> name,
+      (name)=>{
+        if(isBlocked(name)) return
+        if(target === "sauce1"){
+          document.getElementById("sauce1").value = name
+        } else {
+          const row = document.querySelector("#sauce2List .sauce-row")
+          const hidden = row ? row.querySelector('input[data-role="sauce-value"]') : null
+          if(hidden) hidden.value = name
+        }
+        saveRecentItem("sauce", name)
+        updateSaucePickerLabel(target)
+        document.getElementById("sauceModal").style.display = "none"
+        calc()
       }
-      saveRecentItem("sauce", name)
-      updateSaucePickerLabel(target)
-      modal.style.display = "none"
-      calc()
-    }
-  )
+    )
+  }
 
   sortedSauceNames.forEach(renderSauceItem)
-
-  modal.onclick = (e)=>{
-    if(e.target.id === "sauceModal") modal.style.display = "none"
-  }
 }
 
 function createSauceSelect(){
   const wrapper = document.createElement("div")
   wrapper.className = "sauce-row"
+  wrapper.onclick = ()=>{
+    openSaucePicker("sauce2")
+  }
 
   wrapper.style.display = "flex"
   wrapper.style.alignItems = "center"
@@ -978,7 +1037,8 @@ function createSauceSelect(){
   display.dataset.role = "sauce-display"
   display.className = "picker-field picker-field-fill picker-field--placeholder"
   display.textContent = NO_SAUCE_LABEL
-  display.onclick = ()=>{
+  display.onclick = (e)=>{
+    e.stopPropagation()
     openSaucePicker("sauce2")
   }
 
@@ -1049,7 +1109,9 @@ let lastCal = 0;
 let lastProtein = 0;
 let resultEnabled = false;
 let resultMode = "";
-let shouldPopResultOnNextCalc = false;
+let resultDetailsExpanded = false;
+let lastMainForFeedback = "";
+let saucePickerTarget = "sauce1"
 
 function animateNumber(el, start, end, decimals=1, duration=300) {
   let startTime = null;
@@ -1077,18 +1139,44 @@ function showResultStats(summaryText, breakdownHtml){
     resultEl.innerHTML =
 `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
   <div style="font-size:20px;font-weight:600;">🔥 <span id="calVal">0.0</span> kcal</div>
-  <button id="copyShareBtn" class="result-copy-btn" type="button" onclick="copyResultSummary()">複製分享</button>
+  <button id="copyShareBtn" class="result-copy-btn" type="button" onclick="copyResultSummary()">複製結果</button>
 </div>
 <div style="font-size:26px;color:#34c759;font-weight:700;margin-top:6px;"><span id="proVal">0</span> g protein</div>
-<div id="summaryLine" style="margin-top:8px;font-size:12px;color:#6e6e73;line-height:1.4;"></div>
-<div id="breakdownLine" style="margin-top:10px;font-size:13px;color:#8e8e93;line-height:1.5;"></div>`
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;">
+  <div id="summaryLine" style="font-size:12px;color:#6e6e73;line-height:1.4;flex:1;"></div>
+  <button id="detailToggleBtn" class="result-detail-btn" type="button" aria-label="詳細 Details" title="詳細 Details" aria-expanded="false" onclick="toggleResultDetails()">
+    <span class="result-detail-icon">⌄</span>
+  </button>
+</div>
+<div id="breakdownWrap" style="display:none;">
+  <div id="breakdownLine" style="margin-top:10px;font-size:13px;color:#8e8e93;line-height:1.5;"></div>
+</div>`
     resultMode = "stats"
+    resultDetailsExpanded = false
   }
 
   const summaryEl = document.getElementById("summaryLine")
   const breakdownEl = document.getElementById("breakdownLine")
+  const detailBtn = document.getElementById("detailToggleBtn")
+  const breakdownWrap = document.getElementById("breakdownWrap")
   if(summaryEl) summaryEl.textContent = summaryText
   if(breakdownEl) breakdownEl.innerHTML = breakdownHtml
+  if(detailBtn){
+    detailBtn.classList.toggle("expanded", resultDetailsExpanded)
+    detailBtn.setAttribute("aria-expanded", resultDetailsExpanded ? "true" : "false")
+  }
+  if(breakdownWrap) breakdownWrap.style.display = resultDetailsExpanded ? "block" : "none"
+}
+
+function toggleResultDetails(){
+  resultDetailsExpanded = !resultDetailsExpanded
+  const detailBtn = document.getElementById("detailToggleBtn")
+  const breakdownWrap = document.getElementById("breakdownWrap")
+  if(detailBtn){
+    detailBtn.classList.toggle("expanded", resultDetailsExpanded)
+    detailBtn.setAttribute("aria-expanded", resultDetailsExpanded ? "true" : "false")
+  }
+  if(breakdownWrap) breakdownWrap.style.display = resultDetailsExpanded ? "block" : "none"
 }
 
 function triggerResultPop(){
@@ -1124,7 +1212,7 @@ function copyResultSummary(){
     btn.textContent = "已複製"
     if(copyShareResetTimer) clearTimeout(copyShareResetTimer)
     copyShareResetTimer = setTimeout(()=>{
-      btn.textContent = "複製分享"
+      btn.textContent = "複製結果"
     }, 1200)
     showCopyToast("已複製")
   }
@@ -1159,6 +1247,8 @@ let main = document.getElementById("main").value
 if(!main){
   resultEnabled = false
   resultMode = ""
+  resultDetailsExpanded = false
+  lastMainForFeedback = ""
   lastCal = 0
   lastProtein = 0
   if(resultEl){
@@ -1217,6 +1307,7 @@ if(sauce1 && sauce2Visible && sauce2){
 const selectedSauceCount = (sauce1 ? 1 : 0) + (sauce2 ? 1 : 0)
 const summaryText = `主餐 1 份 + 加料 ${selectedAddonNames.length} 份 + 醬料 ${selectedSauceCount} 種`
 showResultStats(summaryText, breakdown.join("<br>"))
+const mainChanged = main !== lastMainForFeedback
 
 const sauceShareText = []
 if(sauce1) sauceShareText.push(getSauceDisplayText(sauce1))
@@ -1258,6 +1349,7 @@ animateNumber(proEl, lastProtein, total.protein, 0)
 
 lastCal = total.cal
 lastProtein = total.protein
+lastMainForFeedback = main
 
   resultEnabled = true
 
@@ -1265,11 +1357,10 @@ lastProtein = total.protein
   resultEl.style.visibility = "visible"
   resultEl.classList.add("active")
   setTimeout(() => resultEl.classList.remove("active"), 600)
-  if(shouldPopResultOnNextCalc){
+  if(mainChanged){
     triggerResultPop()
-    shouldPopResultOnNextCalc = false
+    if (navigator.vibrate) navigator.vibrate(5)
   }
-  if (navigator.vibrate) navigator.vibrate(5);
   updateResultVisibility()
 }
 
@@ -1306,11 +1397,6 @@ window.addEventListener("scroll", () => {
   }
 })
 
-function toggleDisclaimer(){
-  const el = document.getElementById("disclaimerDetail")
-  el.style.display = el.style.display === "none" ? "block" : "none"
-}
-
 function resetAll(){
   document.body.classList.add("resetting")
   setTimeout(()=> document.body.classList.remove("resetting"), 360)
@@ -1341,6 +1427,8 @@ function resetAll(){
   lastCal = 0
   lastProtein = 0
   resultMode = ""
+  resultDetailsExpanded = false
+  lastMainForFeedback = ""
 
   const addonModal = document.getElementById("addonModal")
   const mainModal = document.getElementById("mainModal")

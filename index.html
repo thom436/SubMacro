@@ -53,6 +53,7 @@
   <span>加料</span>
   <span id="addonLabel" style="color:#8e8e93;font-size:13px;font-weight:400;">Add-ons (0)</span>
 </label>
+<div id="addonSwipeHint" class="swipe-hint" style="display:none;">左滑可刪除 Swipe to delete</div>
 <div id="addonList" style="min-height:10px;"></div>
 <div id="addonEmptyPicker" class="picker-field picker-field--placeholder" onclick="openAddonPicker(addonActiveGroup)" style="margin-top:12px;">
   尚未選擇加料 Choose add-on
@@ -65,8 +66,9 @@
   <span>醬料</span>
   <span style="color:#8e8e93;font-size:13px;font-weight:400;">Sauce</span>
 </label>
-<div id="sauce1Row" style="display:flex;align-items:center;gap:8px;margin-top:12px;">
-  <div id="sauce1Picker" class="picker-field picker-field-fill picker-field--placeholder" onclick="openSaucePicker('sauce1')">
+<div id="sauceSwipeHint" class="swipe-hint" style="display:none;">左滑可刪除 Swipe to delete</div>
+<div id="sauce1Row" class="picker-row-with-minus" style="margin-top:12px;">
+  <div id="sauce1Picker" class="picker-field picker-field-fill picker-field--placeholder picker-field-with-minus" onclick="openSaucePicker('sauce1')">
     不加醬 No sauce
   </div>
   <button type="button" id="sauce1RemoveBtn" class="minus-btn" onclick="removeSauce1()" style="display:none;">
@@ -74,7 +76,7 @@
   </button>
 </div>
 <input type="hidden" id="sauce1" value="">
-  <div id="sauce2EmptyPicker" class="picker-field picker-field--placeholder picker-field--plus picker-field--reserve-minus" onclick="addSauce2()" style="margin-top:10px;display:none;">
+  <div id="sauce2EmptyPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="addSauce2()" style="margin-top:10px;display:none;">
     +
   </div>
   <div id="sauce2List" style="min-height:10px;margin-top:8px;"></div>

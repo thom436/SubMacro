@@ -116,6 +116,10 @@ const RECENT_KEYS = {
   addon: "recent_addon",
   sauce: "recent_sauce"
 }
+const SWIPE_HINT_KEYS = {
+  addon: "swipe_hint_seen_addon",
+  sauce: "swipe_hint_seen_sauce"
+}
 
 function buildGroups(seedGroups, allItems, extraGroupName = "其他"){
   const groups = {}
@@ -219,6 +223,30 @@ function compactZhShareName(name){
   return String(name || "").replace(/[（(]([^()（）]+)[)）]/g, "$1")
 }
 
+function hasSeenSwipeHint(type){
+  const key = SWIPE_HINT_KEYS[type]
+  if(!key) return false
+  return localStorage.getItem(key) === "1"
+}
+
+function markSwipeHintSeen(type){
+  const key = SWIPE_HINT_KEYS[type]
+  if(!key) return
+  try {
+    localStorage.setItem(key, "1")
+  } catch (_) {
+    // no-op
+  }
+}
+
+function flashPickerSelection(el){
+  if(!el) return
+  el.classList.remove("picker-select-flash")
+  void el.offsetWidth
+  el.classList.add("picker-select-flash")
+  setTimeout(()=> el.classList.remove("picker-select-flash"), 280)
+}
+
 function styleModalCategoryButton(btn, active){
   const dark = isDarkMode()
   btn.style.padding = "8px 12px"
@@ -226,6 +254,114 @@ function styleModalCategoryButton(btn, active){
   btn.style.border = dark ? "1px solid #3a3a3c" : "1px solid #ddd"
   btn.style.background = active ? "#2fa84f" : (dark ? "#2c2c2e" : "#fff")
   btn.style.color = active ? "#f3fff7" : (dark ? "#f2f2f7" : "#000")
+}
+
+function closeSwipeRow(row){
+  if(!row) return
+  row.classList.remove("swiped")
+  const picker = row.querySelector(".picker-field")
+  if(picker) picker.style.transform = ""
+}
+
+function removeRowWithAnimation(row, onDone){
+  if(!row){
+    if(onDone) onDone()
+    return
+  }
+
+  const rowHeight = row.offsetHeight
+  row.style.height = `${rowHeight}px`
+  row.style.overflow = "hidden"
+  row.classList.add("removing")
+
+  requestAnimationFrame(()=>{
+    row.style.height = "0px"
+    row.style.marginTop = "0px"
+    row.style.opacity = "0"
+  })
+
+  setTimeout(()=>{
+    row.remove()
+    if(onDone) onDone()
+  }, 230)
+}
+
+function closeOtherSwipeRows(exceptRow = null){
+  document.querySelectorAll(".picker-row-with-minus.swiped").forEach(row=>{
+    if(row !== exceptRow) closeSwipeRow(row)
+  })
+}
+
+function attachSwipeToReveal(row){
+  const picker = row.querySelector(".picker-field")
+  const minusBtn = row.querySelector(".minus-btn")
+  if(!picker || !minusBtn) return
+  const isAddonRow = row.classList.contains("addon-row")
+  const hintType = isAddonRow ? "addon" : "sauce"
+
+  let startX = 0
+  let startY = 0
+  let currentX = 0
+  let isSwiping = false
+  const revealWidth = 52
+
+  row.addEventListener("touchstart", (e)=>{
+    startX = e.touches[0].clientX
+    startY = e.touches[0].clientY
+    currentX = startX
+    isSwiping = false
+    closeOtherSwipeRows(row)
+  }, { passive: true })
+
+  row.addEventListener("touchmove", (e)=>{
+    currentX = e.touches[0].clientX
+    const currentY = e.touches[0].clientY
+    const diffX = currentX - startX
+    const diffY = currentY - startY
+
+    if(!isSwiping){
+      if(Math.abs(diffX) > 8 && Math.abs(diffX) > Math.abs(diffY)){
+        isSwiping = true
+      } else {
+        return
+      }
+    }
+
+    e.preventDefault()
+
+    let next = 0
+    if(row.classList.contains("swiped")){
+      next = Math.max(-revealWidth, Math.min(0, diffX - revealWidth))
+    } else {
+      next = Math.max(-revealWidth, Math.min(0, diffX))
+    }
+
+    picker.style.transform = `translateX(${next}px)`
+    const progress = Math.abs(next) / revealWidth
+    minusBtn.style.opacity = String(Math.max(0.15, progress))
+  }, { passive: false })
+
+  row.addEventListener("touchend", ()=>{
+    if(!isSwiping){
+      return
+    }
+
+    const diffX = currentX - startX
+    const shouldOpen = row.classList.contains("swiped")
+      ? diffX < 24
+      : diffX < -24
+
+    if(shouldOpen){
+      row.classList.add("swiped")
+      picker.style.transform = `translateX(-${revealWidth}px)`
+      minusBtn.style.opacity = "1"
+      markSwipeHintSeen(hintType)
+      updateAddonUI()
+      updateSauce2Visibility()
+    } else {
+      closeSwipeRow(row)
+    }
+  })
 }
 
 const mainSeedGroups = {
@@ -387,6 +523,7 @@ function renderMainItems(group){
       mainSelect.value = name
       saveRecentItem("main", name)
       updateMainPickerLabel()
+      flashPickerSelection(document.getElementById("mainPicker"))
       document.getElementById("mainModal").style.display="none"
       calc()
     }
@@ -414,6 +551,7 @@ function renderMainItems(group){
         mainSelect.value = name
         saveRecentItem("main", name)
         updateMainPickerLabel()
+        flashPickerSelection(document.getElementById("mainPicker"))
         document.getElementById("mainModal").style.display="none"
         calc()
       }
@@ -605,6 +743,7 @@ function renderAddonItems(group){
       if(addonPickerTargetRow){
         setAddonValue(addonPickerTargetRow, name)
         saveRecentItem("addon", name)
+        flashPickerSelection(addonPickerTargetRow.querySelector(".picker-field"))
         document.getElementById("addonModal").style.display = "none"
         calc()
         return
@@ -626,6 +765,7 @@ function renderAddonItems(group){
         if(addonPickerTargetRow){
           setAddonValue(addonPickerTargetRow, name)
           saveRecentItem("addon", name)
+          flashPickerSelection(addonPickerTargetRow.querySelector(".picker-field"))
           document.getElementById("addonModal").style.display = "none"
           calc()
           return
@@ -671,81 +811,15 @@ calc()
 function createAddonSelect(removable = true){
   const wrapper = document.createElement("div")
   wrapper.className = "addon-row"
-  // Touch swipe-to-remove for mobile
-  let startX = 0;
-  let startY = 0;
-  let currentX = 0;
-  let isSwiping = false;
 
-  wrapper.addEventListener("touchstart", (e) => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    isSwiping = false;
-  });
-
-  wrapper.addEventListener("touchmove", (e) => {
-    currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-
-    const diffX = currentX - startX;
-    const diffY = currentY - startY;
-
-    // only trigger swipe if horizontal movement is dominant
-    if (!isSwiping) {
-      if (Math.abs(diffX) > 10 && Math.abs(diffX) > Math.abs(diffY)) {
-        isSwiping = true;
-      } else {
-        return;
-      }
-    }
-
-    e.preventDefault();
-
-    if (diffX < 0) {
-      wrapper.style.transform = `translateX(${diffX}px)`;
-      wrapper.style.opacity = Math.max(0.5, 1 + diffX / 200);
-    }
-  });
-
-  wrapper.addEventListener("touchend", (e) => {
-    const diff = currentX - startX;
-
-    if (!isSwiping) {
-      startX = 0;
-      currentX = 0;
-      return;
-    }
-
-    if (diff < -80) {
-      wrapper.style.transition = "all 0.2s ease";
-      wrapper.style.transform = "translateX(-120%)";
-      wrapper.style.opacity = "0";
-
-      setTimeout(() => {
-        wrapper.remove();
-        updateAddonUI();
-        calc();
-      }, 200);
-    } else {
-      wrapper.style.transition = "all 0.2s ease";
-      wrapper.style.transform = "translateX(0)";
-      wrapper.style.opacity = "1";
-    }
-
-    isSwiping = false;
-    startX = 0;
-    currentX = 0;
-  });
-
-  wrapper.style.display = "flex"
-  wrapper.style.alignItems = "center"
-  wrapper.style.gap = "8px"
+  wrapper.classList.add("picker-row-with-minus")
+  wrapper.style.display = "block"
   wrapper.style.marginTop = "8px"
   wrapper.style.position = "relative"
   wrapper.style.overflow = "visible"
 
   const display = document.createElement("div")
-  display.className = "picker-field picker-field-fill picker-field--placeholder"
+  display.className = "picker-field picker-field-fill picker-field--placeholder picker-field-with-minus"
   display.textContent = "尚未選擇加料"
   display.onclick = ()=>{
     openAddonPicker(addonActiveGroup, wrapper)
@@ -772,13 +846,15 @@ function createAddonSelect(removable = true){
 
     removeBtn.onclick = (e) => {
       e.stopPropagation();
-      wrapper.remove()
-      updateAddonUI()
-      calc()
+      removeRowWithAnimation(wrapper, ()=>{
+        updateAddonUI()
+        calc()
+      })
     }
 
     controls.appendChild(removeBtn)
     wrapper.appendChild(controls)
+    attachSwipeToReveal(wrapper)
   }
 
   return wrapper
@@ -815,6 +891,7 @@ function addAddon(defaultValue = ""){
   setAddonValue(wrapper, defaultValue)
 
   container.appendChild(wrapper)
+  flashPickerSelection(wrapper.querySelector(".picker-field"))
   updateAddonUI()
   calc()
   return true
@@ -833,7 +910,10 @@ function updateAddonUI(){
       : "+"
     emptyPicker.classList.toggle("picker-field--placeholder", count === 0)
     emptyPicker.classList.toggle("picker-field--plus", count > 0)
-    emptyPicker.classList.toggle("picker-field--reserve-minus", count > 0)
+  }
+  const addonSwipeHint = document.getElementById("addonSwipeHint")
+  if(addonSwipeHint){
+    addonSwipeHint.style.display = count > 0 && !hasSeenSwipeHint("addon") ? "block" : "none"
   }
 
   // show swipe hint only when there are add-ons
@@ -858,11 +938,17 @@ function updateSauce2Visibility(){
   if(!sauce1Value){
     list.innerHTML = ""
     emptyPicker.style.display = "none"
+    const sauceSwipeHint = document.getElementById("sauceSwipeHint")
+    if(sauceSwipeHint) sauceSwipeHint.style.display = "none"
     return
   }
 
   const hasSecondSauceRow = list.children.length > 0
   emptyPicker.style.display = hasSecondSauceRow ? "none" : "flex"
+  const sauceSwipeHint = document.getElementById("sauceSwipeHint")
+  if(sauceSwipeHint){
+    sauceSwipeHint.style.display = hasSecondSauceRow && !hasSeenSwipeHint("sauce") ? "block" : "none"
+  }
 }
 
 function updateSaucePickerLabel(target = "sauce1"){
@@ -978,6 +1064,11 @@ function renderSauceItems(){
       }
       saveRecentItem("sauce", name)
       updateSaucePickerLabel(target)
+      flashPickerSelection(
+        target === "sauce1"
+          ? document.getElementById("sauce1Picker")
+          : document.querySelector("#sauce2List .sauce-row [data-role='sauce-display']")
+      )
       document.getElementById("sauceModal").style.display = "none"
       calc()
     }
@@ -1001,6 +1092,11 @@ function renderSauceItems(){
         }
         saveRecentItem("sauce", name)
         updateSaucePickerLabel(target)
+        flashPickerSelection(
+          target === "sauce1"
+            ? document.getElementById("sauce1Picker")
+            : document.querySelector("#sauce2List .sauce-row [data-role='sauce-display']")
+        )
         document.getElementById("sauceModal").style.display = "none"
         calc()
       }
@@ -1017,14 +1113,14 @@ function createSauceSelect(){
     openSaucePicker("sauce2")
   }
 
-  wrapper.style.display = "flex"
-  wrapper.style.alignItems = "center"
-  wrapper.style.gap = "8px"
+  wrapper.classList.add("picker-row-with-minus")
+  wrapper.style.display = "block"
   wrapper.style.marginTop = "8px"
+  wrapper.style.position = "relative"
 
   const display = document.createElement("div")
   display.dataset.role = "sauce-display"
-  display.className = "picker-field picker-field-fill picker-field--placeholder"
+  display.className = "picker-field picker-field-fill picker-field--placeholder picker-field-with-minus"
   display.textContent = NO_SAUCE_LABEL
   display.onclick = (e)=>{
     e.stopPropagation()
@@ -1042,14 +1138,16 @@ function createSauceSelect(){
 
 removeBtn.onclick = (e)=>{
   e.stopPropagation()
-  wrapper.remove()
-  updateSauce2Visibility()
-  calc()
+  removeRowWithAnimation(wrapper, ()=>{
+    updateSauce2Visibility()
+    calc()
+  })
 }
 
   wrapper.appendChild(display)
   wrapper.appendChild(hiddenValue)
   wrapper.appendChild(removeBtn)
+  attachSwipeToReveal(wrapper)
 
   return wrapper
 }

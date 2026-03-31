@@ -199,18 +199,10 @@ select:focus-visible {
 .picker-field--plus {
   justify-content: center;
   text-align: center;
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 400;
   letter-spacing: 0;
   color: #8e8e93;
-}
-
-.picker-field--reserve-minus {
-  width: calc(100% - 36px) !important;
-  max-width: calc(100% - 36px) !important;
-  margin-right: auto !important;
-  box-sizing: border-box;
-  align-self: flex-start;
 }
 
 .modal-search-input {
@@ -273,6 +265,13 @@ select:focus-visible {
   white-space: nowrap;
 }
 
+.swipe-hint {
+  font-size: 11px;
+  color: #8e8e93;
+  margin-top: 6px;
+  margin-bottom: 2px;
+}
+
 .minus-btn {
   border: 1px solid rgba(199,58,51,0.3);
   background: rgba(199,58,51,0.12);
@@ -287,6 +286,68 @@ select:focus-visible {
   color: #c73a33;
   transition: all 0.15s ease;
   opacity: 0.9;
+}
+
+.picker-row-with-minus .minus-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.picker-row-with-minus.swiped .minus-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.picker-row-with-minus:hover .minus-btn,
+.picker-row-with-minus:focus-within .minus-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.picker-field-with-minus {
+  padding-right: 52px;
+  transition: transform 0.2s ease;
+}
+
+.picker-select-flash {
+  animation: pickerSelectFlash 0.26s cubic-bezier(.22,.61,.36,1);
+}
+
+@keyframes pickerSelectFlash {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(95,211,125,0);
+  }
+  45% {
+    transform: scale(0.995);
+    box-shadow: 0 0 0 3px rgba(95,211,125,0.16);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(95,211,125,0);
+  }
+}
+
+.picker-row-with-minus.removing {
+  pointer-events: none;
+  transition: height 0.23s cubic-bezier(.22,.61,.36,1), margin-top 0.23s cubic-bezier(.22,.61,.36,1), opacity 0.18s ease;
+}
+
+.picker-row-with-minus.removing .picker-field {
+  transform: translateX(-12px);
+  opacity: 0;
+  transition: transform 0.2s ease, opacity 0.18s ease;
+}
+
+.picker-row-with-minus.removing .minus-btn {
+  opacity: 0;
+  transition: opacity 0.14s ease;
 }
 
 #addonList .addon-row .picker-field {
@@ -748,6 +809,10 @@ input[type="checkbox"]:active {
     color: #73d892;
     border-color: rgba(95,211,125,0.35);
     background: rgba(95,211,125,0.14);
+  }
+
+  .swipe-hint {
+    color: #8f96a4;
   }
 
   .footer-inline-link {

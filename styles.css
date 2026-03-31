@@ -290,7 +290,7 @@ select:focus-visible {
 }
 
 #addonList .addon-row .picker-field {
-  margin-top: 12px;
+  margin-top: 0;
   font-weight: 400;
   position: relative;
   z-index: 1;

@@ -545,8 +545,7 @@ function renderAddonItems(group){
       const added = addAddon(name)
       if(!added) return
       saveRecentItem("addon", name)
-      renderAddonItems(addonActiveGroup)
-      if(searchEl) searchEl.focus()
+      document.getElementById("addonModal").style.display = "none"
     }
     itemsEl.appendChild(div)
   }

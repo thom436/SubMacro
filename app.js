@@ -108,6 +108,8 @@ const sauceNameMap = {
 }
 
 const NO_SAUCE_LABEL = "不加醬 No sauce"
+let lastShareText = ""
+let copyShareResetTimer = null
 
 function buildGroups(seedGroups, allItems, extraGroupName = "其他"){
   const groups = {}
@@ -131,6 +133,16 @@ function getSelectionHighlightColor(){
 
 function isDarkMode(){
   return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+}
+
+function formatKcal(value){
+  const rounded = Math.round(value * 10) / 10
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
+}
+
+function formatProtein(value){
+  const rounded = Math.round(value * 10) / 10
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
 }
 
 function styleModalCategoryButton(btn, active){
@@ -242,10 +254,12 @@ function renderMainItems(group){
     textWrap.style.paddingRight = "10px"
 
     const meta = document.createElement("div")
-    meta.textContent = `${data.main[name].cal} kcal`
+    const efficiency = ((data.main[name].protein / data.main[name].cal) * 100).toFixed(1)
+    meta.innerHTML = `${data.main[name].cal} kcal<br><span style="font-size:11px;color:#8e8e93;">${efficiency}g/100kcal</span>`
     meta.style.fontSize = "12px"
     meta.style.color = "#8e8e93"
     meta.style.whiteSpace = "nowrap"
+    meta.style.textAlign = "right"
 
     div.appendChild(textWrap)
     div.appendChild(meta)
@@ -323,10 +337,12 @@ function openAddonPicker(defaultGroup = "", targetRow = null){
   const modal = document.getElementById("addonModal")
   const catEl = document.getElementById("addonModalCategories")
   const itemsEl = document.getElementById("addonItems")
+  const searchEl = document.getElementById("addonSearch")
 
   modal.style.display = "block"
   catEl.innerHTML = ""
   itemsEl.innerHTML = ""
+  if(searchEl) searchEl.value = ""
 
   const groupNames = Object.keys(addonGroups).filter(g => (addonGroups[g] || []).length > 0)
   if(!groupNames.length) return
@@ -359,13 +375,30 @@ function openAddonPicker(defaultGroup = "", targetRow = null){
 
 function renderAddonItems(group){
   const itemsEl = document.getElementById("addonItems")
+  const searchEl = document.getElementById("addonSearch")
   itemsEl.innerHTML = ""
   const selected = new Set(getSelectedAddonValues(addonPickerTargetHidden))
   const editingCurrentValue = addonPickerTargetHidden ? addonPickerTargetHidden.value : ""
+  const query = searchEl ? searchEl.value.trim().toLowerCase() : ""
 
   const sortedAddonNames = [...(addonGroups[group] || [])]
     .filter(name => !!data.addon[name])
+    .filter(name => {
+      if(!query) return true
+      const en = addonNameMap[name] || ""
+      return `${name} ${en}`.toLowerCase().includes(query)
+    })
     .sort((a,b)=> data.addon[b].cal - data.addon[a].cal)
+
+  if(!sortedAddonNames.length){
+    const empty = document.createElement("div")
+    empty.style.padding = "14px 12px"
+    empty.style.fontSize = "13px"
+    empty.style.color = "#8e8e93"
+    empty.textContent = query ? "找不到符合的加料 No matching add-ons" : "此分類目前沒有項目"
+    itemsEl.appendChild(empty)
+    return
+  }
 
   sortedAddonNames.forEach(name=>{
     if(!data.addon[name]) return;
@@ -854,7 +887,10 @@ function showResultStats(summaryText, breakdownHtml){
   const resultEl = document.getElementById("result")
   if(resultMode !== "stats"){
     resultEl.innerHTML =
-`<div style="font-size:20px;font-weight:600;">🔥 <span id="calVal">0.0</span> kcal</div>
+`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+  <div style="font-size:20px;font-weight:600;">🔥 <span id="calVal">0.0</span> kcal</div>
+  <button id="copyShareBtn" class="result-copy-btn" type="button" onclick="copyResultSummary()">複製分享</button>
+</div>
 <div style="font-size:26px;color:#34c759;font-weight:700;margin-top:6px;"><span id="proVal">0</span> g protein</div>
 <div id="summaryLine" style="margin-top:8px;font-size:12px;color:#6e6e73;line-height:1.4;"></div>
 <div id="breakdownLine" style="margin-top:10px;font-size:13px;color:#8e8e93;line-height:1.5;"></div>`
@@ -873,6 +909,40 @@ function triggerResultPop(){
   resultEl.classList.remove("pop")
   void resultEl.offsetWidth
   resultEl.classList.add("pop")
+}
+
+function copyResultSummary(){
+  if(!lastShareText) return
+
+  const btn = document.getElementById("copyShareBtn")
+  const setCopiedLabel = ()=>{
+    if(!btn) return
+    btn.textContent = "已複製"
+    if(copyShareResetTimer) clearTimeout(copyShareResetTimer)
+    copyShareResetTimer = setTimeout(()=>{
+      btn.textContent = "複製分享"
+    }, 1200)
+  }
+
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(lastShareText).then(setCopiedLabel).catch(()=>{})
+    return
+  }
+
+  const ta = document.createElement("textarea")
+  ta.value = lastShareText
+  ta.style.position = "fixed"
+  ta.style.opacity = "0"
+  document.body.appendChild(ta)
+  ta.focus()
+  ta.select()
+  try {
+    document.execCommand("copy")
+    setCopiedLabel()
+  } catch (_) {
+    // no-op
+  }
+  document.body.removeChild(ta)
 }
 
 function calc(){
@@ -943,6 +1013,28 @@ const selectedSauceCount = (sauce1 ? 1 : 0) + (sauce2 ? 1 : 0)
 const summaryText = `主餐 1 份 + 加料 ${selectedAddonNames.length} 份 + 醬料 ${selectedSauceCount} 種`
 showResultStats(summaryText, breakdown.join("<br>"))
 
+const sauceShareText = []
+if(sauce1) sauceShareText.push(getSauceDisplayText(sauce1))
+if(sauce2) sauceShareText.push(getSauceDisplayText(sauce2))
+if(!sauceShareText.length) sauceShareText.push("不加醬 No sauce")
+
+const addonShareText = selectedAddonNames.length
+  ? selectedAddonNames.map(name => {
+      const en = addonNameMap[name] || ""
+      return en ? `${name} ${en}` : name
+    }).join("、")
+  : "無 None"
+
+const mainEn = mainNameMap[main] || ""
+const mainText = mainEn ? `${main} ${mainEn}` : main
+const doubleText = document.getElementById("double").checked ? "是 Yes" : "否 No"
+lastShareText =
+`🔥 ${formatKcal(total.cal)} kcal / 💪 ${formatProtein(total.protein)} g protein
+主餐 Main: ${mainText}
+雙份肉 Double meat: ${doubleText}
+加料 Add-ons: ${addonShareText}
+醬料 Sauce: ${sauceShareText.join(" + ")}`
+
 const calEl = document.getElementById("calVal")
 const proEl = document.getElementById("proVal")
 
@@ -981,7 +1073,7 @@ function updateResultVisibility(){
 
   resultEl.style.opacity = "1"
   resultEl.style.visibility = "visible"
-  resultEl.style.pointerEvents = "none"
+  resultEl.style.pointerEvents = "auto"
 }
 
 

@@ -166,6 +166,23 @@ select:focus-visible {
   color: #8e8e93;
 }
 
+.modal-search-input {
+  width: 100%;
+  margin: 6px 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e5ea;
+  background: #f7f7fa;
+  color: #1c1c1e;
+  font-size: 14px;
+  outline: none;
+}
+
+.modal-search-input:focus {
+  border-color: var(--ios-green-btn);
+  box-shadow: 0 0 0 2px rgba(47,168,79,0.22);
+}
+
 #addonList .addon-row .picker-field {
   margin-top: 12px;
   font-weight: 400;
@@ -236,6 +253,16 @@ button:active {
 .result strong {
   font-size: 20px;
   color: var(--subway-green-light);
+}
+
+.result-copy-btn {
+  border: 1px solid #d3d6dd;
+  background: #f5f6f9;
+  color: #2b2f38;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
 }
 
 body.resetting .card {
@@ -424,6 +451,22 @@ input[type="checkbox"]:active {
 
   .picker-field--placeholder {
     color: #9aa0ad !important;
+  }
+
+  .modal-search-input {
+    background: #242730;
+    color: #f2f2f7;
+    border-color: #353a45;
+  }
+
+  .modal-search-input::placeholder {
+    color: #9aa0ad;
+  }
+
+  .result-copy-btn {
+    background: #303642;
+    border-color: #454c59;
+    color: #e7ebf2;
   }
 
   #mainPicker:not(.picker-field--placeholder) {

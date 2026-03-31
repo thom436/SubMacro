@@ -110,6 +110,7 @@ const sauceNameMap = {
 const NO_SAUCE_LABEL = "不加醬 No sauce"
 let lastShareText = ""
 let copyShareResetTimer = null
+let suppressPickerTapUntil = 0
 const RECENT_LIMIT = 3
 const RECENT_KEYS = {
   main: "recent_main",
@@ -239,12 +240,29 @@ function markSwipeHintSeen(type){
   }
 }
 
+function isPickerTapSuppressed(){
+  return Date.now() < suppressPickerTapUntil
+}
+
+function openSauce1Picker(){
+  if(isPickerTapSuppressed()) return
+  openSaucePicker("sauce1")
+}
+
 function flashPickerSelection(el){
   if(!el) return
   el.classList.remove("picker-select-flash")
   void el.offsetWidth
   el.classList.add("picker-select-flash")
   setTimeout(()=> el.classList.remove("picker-select-flash"), 280)
+}
+
+function animatePickerAppear(el){
+  if(!el) return
+  el.classList.remove("picker-soft-appear")
+  void el.offsetWidth
+  el.classList.add("picker-soft-appear")
+  setTimeout(()=> el.classList.remove("picker-soft-appear"), 260)
 }
 
 function styleModalCategoryButton(btn, active){
@@ -339,6 +357,8 @@ function attachSwipeToReveal(row){
     if(!isSwiping){
       return
     }
+
+    suppressPickerTapUntil = Date.now() + 280
 
     const diffX = currentX - startX
     const shouldOpen = row.classList.contains("swiped")
@@ -923,6 +943,7 @@ function updateSauce2Visibility(){
   const list = document.getElementById("sauce2List")
   const emptyPicker = document.getElementById("sauce2EmptyPicker")
   if(!list || !emptyPicker) return
+  const wasVisible = emptyPicker.style.display !== "none"
 
   if(!sauce1Value){
     list.innerHTML = ""
@@ -933,7 +954,11 @@ function updateSauce2Visibility(){
   }
 
   const hasSecondSauceRow = list.children.length > 0
-  emptyPicker.style.display = hasSecondSauceRow ? "none" : "flex"
+  const shouldShowPlus = !hasSecondSauceRow
+  emptyPicker.style.display = shouldShowPlus ? "flex" : "none"
+  if(shouldShowPlus && !wasVisible){
+    animatePickerAppear(emptyPicker)
+  }
   const sauceSwipeHint = document.getElementById("sauceSwipeHint")
   if(sauceSwipeHint){
     sauceSwipeHint.style.display = sauce1Value ? "block" : "none"
@@ -1113,6 +1138,7 @@ function createSauceSelect(){
   display.textContent = NO_SAUCE_LABEL
   display.onclick = (e)=>{
     e.stopPropagation()
+    if(isPickerTapSuppressed()) return
     openSaucePicker("sauce2")
   }
 

@@ -183,49 +183,40 @@ select:focus-visible {
   box-shadow: 0 0 0 2px rgba(47,168,79,0.22);
 }
 
-.modal-section-label {
-  font-size: 10px;
-  color: #8e8e93;
-  padding: 7px 12px 4px;
-  letter-spacing: 0.2px;
-}
-
-.modal-section-label--recent::before {
-  content: "";
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: rgba(47,168,79,0.9);
-  margin-right: 5px;
-  transform: translateY(-1px);
-}
-
-.modal-section-divider {
-  height: 1px;
-  margin: 4px 12px 0;
-  background: #e7e8ed;
-}
-
 .modal-item-title {
   font-weight: 500;
-}
-
-.modal-recent-dot {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 700;
-  color: #4da46a;
-  line-height: 1;
-  transform: translateY(-1px);
 }
 
 .modal-recent-hint {
   font-size: 10px;
   color: #8e8e93;
-  padding: 6px 12px 4px;
+  padding: 6px 12px 6px;
   letter-spacing: 0.2px;
   line-height: 1;
+}
+
+.modal-recent-shortcuts {
+  padding: 4px 12px 10px;
+  border-bottom: 1px solid #e7e8ed;
+  margin-bottom: 2px;
+}
+
+.modal-recent-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.modal-recent-btn {
+  border: 1px solid rgba(47,168,79,0.35);
+  background: rgba(47,168,79,0.1);
+  color: #1f8f44;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  white-space: nowrap;
 }
 
 #addonList .addon-row .picker-field {
@@ -597,24 +588,18 @@ input[type="checkbox"]:active {
     color: #9aa0ad;
   }
 
-  .modal-section-label {
-    color: #9aa0ad;
-  }
-
-  .modal-section-label--recent::before {
-    background: rgba(95,211,125,0.9);
-  }
-
-  .modal-section-divider {
-    background: #2f3440;
-  }
-
-  .modal-recent-dot {
-    color: #69b985;
-  }
-
   .modal-recent-hint {
     color: #9aa0ad;
+  }
+
+  .modal-recent-shortcuts {
+    border-bottom-color: #2f3440;
+  }
+
+  .modal-recent-btn {
+    color: #73d892;
+    border-color: rgba(95,211,125,0.35);
+    background: rgba(95,211,125,0.14);
   }
 
 

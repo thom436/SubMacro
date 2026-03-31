@@ -110,7 +110,7 @@ const sauceNameMap = {
 const NO_SAUCE_LABEL = "不加醬 No sauce"
 let lastShareText = ""
 let copyShareResetTimer = null
-const RECENT_LIMIT = 2
+const RECENT_LIMIT = 3
 const RECENT_KEYS = {
   main: "recent_main",
   addon: "recent_addon",
@@ -185,17 +185,34 @@ function saveRecentItem(type, item){
   }
 }
 
-function appendRecentLabel(container){
+function renderRecentShortcutSection(container, items, getLabel, onPick){
+  if(!items || !items.length) return
+
+  const wrapper = document.createElement("div")
+  wrapper.className = "modal-recent-shortcuts"
+
   const hint = document.createElement("div")
   hint.className = "modal-recent-hint"
-  hint.innerHTML = `<span class="modal-recent-dot">●</span> 最近使用 / Last used`
-  container.appendChild(hint)
-}
+  hint.textContent = "最近使用 / Last used"
+  wrapper.appendChild(hint)
 
-function appendSectionDivider(container){
-  const divider = document.createElement("div")
-  divider.className = "modal-section-divider"
-  container.appendChild(divider)
+  const row = document.createElement("div")
+  row.className = "modal-recent-row"
+
+  items.forEach(item => {
+    const btn = document.createElement("button")
+    btn.type = "button"
+    btn.className = "modal-recent-btn"
+    btn.textContent = getLabel(item)
+    btn.onclick = (e)=>{
+      e.stopPropagation()
+      onPick(item)
+    }
+    row.appendChild(btn)
+  })
+
+  wrapper.appendChild(row)
+  container.appendChild(wrapper)
 }
 
 function compactZhShareName(name){
@@ -295,10 +312,9 @@ function renderMainItems(group){
     .filter(name => !!data.main[name])
     .sort((a,b)=> data.main[b].cal - data.main[a].cal)
 
-  const currentGroupItems = new Set((mainGroups[group] || []).filter(name => !!data.main[name]))
-  const recentMainNames = getRecentItems("main", currentGroupItems)
+  const recentMainNames = getRecentItems("main", Object.keys(data.main))
 
-  const renderMainItem = (name, isRecent = false)=>{
+  const renderMainItem = (name)=>{
     if(!data.main[name]) return;
 
     const div = document.createElement("div")
@@ -328,12 +344,6 @@ function renderMainItems(group){
     rightWrap.style.display = "flex"
     rightWrap.style.alignItems = "center"
     rightWrap.style.gap = "8px"
-    if(isRecent){
-      const recentChip = document.createElement("span")
-      recentChip.className = "modal-recent-dot"
-      recentChip.textContent = "●"
-      rightWrap.appendChild(recentChip)
-    }
     rightWrap.appendChild(meta)
 
     if(name === selectedMain){
@@ -366,15 +376,22 @@ function renderMainItems(group){
     itemsEl.appendChild(div)
   }
 
-  const recentSet = new Set(recentMainNames)
-  const restNames = sortedNames.filter(name => !recentSet.has(name))
-  const hasRecent = recentMainNames.length > 0
-  if(hasRecent){
-    appendRecentLabel(itemsEl)
-    recentMainNames.forEach(name => renderMainItem(name, true))
-  }
+  renderRecentShortcutSection(
+    itemsEl,
+    recentMainNames,
+    (name)=> name,
+    (name)=>{
+      const mainSelect = document.getElementById("main")
+      mainSelect.value = name
+      saveRecentItem("main", name)
+      updateMainPickerLabel()
+      document.getElementById("mainModal").style.display="none"
+      shouldPopResultOnNextCalc = true
+      calc()
+    }
+  )
 
-  restNames.forEach(name => renderMainItem(name, false))
+  sortedNames.forEach(renderMainItem)
 }
 
 const addonNameMap = {
@@ -481,8 +498,7 @@ function renderAddonItems(group){
   const selected = new Set(getSelectedAddonValues())
   const editingCurrentValue = addonPickerTargetHidden ? addonPickerTargetHidden.value : ""
   const query = searchEl ? searchEl.value.trim().toLowerCase() : ""
-  const currentGroupItems = new Set((addonGroups[group] || []).filter(name => !!data.addon[name]))
-  const recentAddonNames = getRecentItems("addon", currentGroupItems)
+  const recentAddonNames = getRecentItems("addon", Object.keys(data.addon))
     .filter(name => {
       if(!query) return true
       const en = addonNameMap[name] || ""
@@ -498,10 +514,7 @@ function renderAddonItems(group){
     })
     .sort((a,b)=> data.addon[b].cal - data.addon[a].cal)
 
-  const recentSet = new Set(recentAddonNames)
-  const groupNamesWithoutRecent = sortedAddonNames.filter(name => !recentSet.has(name))
-
-  if(!recentAddonNames.length && !groupNamesWithoutRecent.length){
+  if(!recentAddonNames.length && !sortedAddonNames.length){
     const empty = document.createElement("div")
     empty.style.padding = "14px 12px"
     empty.style.fontSize = "13px"
@@ -511,7 +524,7 @@ function renderAddonItems(group){
     return
   }
 
-  const renderAddonItem = (name, isRecent = false)=>{
+  const renderAddonItem = (name)=>{
     if(!data.addon[name]) return;
 
     const div = document.createElement("div")
@@ -537,12 +550,6 @@ function renderAddonItems(group){
     rightWrap.style.display = "flex"
     rightWrap.style.alignItems = "center"
     rightWrap.style.gap = "8px"
-    if(isRecent){
-      const recentChip = document.createElement("span")
-      recentChip.className = "modal-recent-dot"
-      recentChip.textContent = "●"
-      rightWrap.appendChild(recentChip)
-    }
     rightWrap.appendChild(meta)
 
     div.appendChild(textWrap)
@@ -577,12 +584,26 @@ function renderAddonItems(group){
     itemsEl.appendChild(div)
   }
 
-  if(recentAddonNames.length){
-    appendRecentLabel(itemsEl)
-    recentAddonNames.forEach(name => renderAddonItem(name, true))
-  }
+  renderRecentShortcutSection(
+    itemsEl,
+    recentAddonNames,
+    (name)=> name,
+    (name)=>{
+      if(addonPickerTargetRow){
+        setAddonValue(addonPickerTargetRow, name)
+        saveRecentItem("addon", name)
+        document.getElementById("addonModal").style.display = "none"
+        calc()
+        return
+      }
+      const added = addAddon(name)
+      if(!added) return
+      saveRecentItem("addon", name)
+      document.getElementById("addonModal").style.display = "none"
+    }
+  )
 
-  groupNamesWithoutRecent.forEach(name => renderAddonItem(name, false))
+  sortedAddonNames.forEach(renderAddonItem)
 }
 
 function init(){
@@ -866,10 +887,7 @@ function openSaucePicker(target = "sauce1"){
     .sort((a,b)=> data.sauce[b].cal - data.sauce[a].cal)
   const recentSauceNames = getRecentItems("sauce", sortedSauceNames)
     .filter(name => !isBlocked(name))
-  const recentSet = new Set(recentSauceNames)
-  const restSauceNames = sortedSauceNames.filter(name => !recentSet.has(name))
-
-  const renderSauceItem = (name, isRecent = false)=>{
+  const renderSauceItem = (name)=>{
     const div = document.createElement("div")
     div.style.padding = "12px"
     div.style.borderBottom = "1px solid #eee"
@@ -891,12 +909,6 @@ function openSaucePicker(target = "sauce1"){
     rightWrap.style.display = "flex"
     rightWrap.style.alignItems = "center"
     rightWrap.style.gap = "8px"
-    if(isRecent){
-      const recentChip = document.createElement("span")
-      recentChip.className = "modal-recent-dot"
-      recentChip.textContent = "●"
-      rightWrap.appendChild(recentChip)
-    }
     rightWrap.appendChild(meta)
     div.appendChild(textWrap)
     div.appendChild(rightWrap)
@@ -926,12 +938,27 @@ function openSaucePicker(target = "sauce1"){
     itemsEl.appendChild(div)
   }
 
-  if(recentSauceNames.length){
-    appendRecentLabel(itemsEl)
-    recentSauceNames.forEach(name => renderSauceItem(name, true))
-  }
+  renderRecentShortcutSection(
+    itemsEl,
+    recentSauceNames,
+    (name)=> name,
+    (name)=>{
+      if(isBlocked(name)) return
+      if(target === "sauce1"){
+        document.getElementById("sauce1").value = name
+      } else {
+        const row = document.querySelector("#sauce2List .sauce-row")
+        const hidden = row ? row.querySelector('input[data-role="sauce-value"]') : null
+        if(hidden) hidden.value = name
+      }
+      saveRecentItem("sauce", name)
+      updateSaucePickerLabel(target)
+      modal.style.display = "none"
+      calc()
+    }
+  )
 
-  restSauceNames.forEach(name => renderSauceItem(name, false))
+  sortedSauceNames.forEach(renderSauceItem)
 
   modal.onclick = (e)=>{
     if(e.target.id === "sauceModal") modal.style.display = "none"

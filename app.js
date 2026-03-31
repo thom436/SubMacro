@@ -301,15 +301,13 @@ function closeOtherSwipeRows(exceptRow = null){
   })
 }
 
-function attachSwipeToReveal(row){
+function attachSwipeToReveal(row, onSwipeDelete){
   if(!row || row.dataset.swipeReady === "1") return
   row.dataset.swipeReady = "1"
 
   const picker = row.querySelector(".picker-field")
   const minusBtn = row.querySelector(".minus-btn")
   if(!picker || !minusBtn) return
-  const isAddonRow = row.classList.contains("addon-row")
-  const hintType = isAddonRow ? "addon" : "sauce"
 
   let startX = 0
   let startY = 0
@@ -361,17 +359,10 @@ function attachSwipeToReveal(row){
     suppressPickerTapUntil = Date.now() + 280
 
     const diffX = currentX - startX
-    const shouldOpen = row.classList.contains("swiped")
-      ? diffX < 24
-      : diffX < -24
-
-    if(shouldOpen){
-      row.classList.add("swiped")
-      picker.style.transform = `translateX(-${revealWidth}px)`
-      minusBtn.style.opacity = "1"
-      markSwipeHintSeen(hintType)
-      updateAddonUI()
-      updateSauce2Visibility()
+    if(diffX < -56){
+      if(typeof onSwipeDelete === "function"){
+        onSwipeDelete()
+      }
     } else {
       closeSwipeRow(row)
     }
@@ -402,14 +393,16 @@ function updateMainPickerLabel(){
   if(!picker) return
 
   if(!value){
-    picker.textContent = "尚未選擇口味 Choose flavor"
+    picker.textContent = "+"
     picker.classList.add("picker-field--placeholder")
+    picker.classList.add("picker-field--plus")
     return
   }
 
   const en = mainNameMap[value] || ""
   picker.textContent = en ? `${value} ${en}` : value
   picker.classList.remove("picker-field--placeholder")
+  picker.classList.remove("picker-field--plus")
 }
 
 function openMainPicker(defaultGroup = ""){
@@ -868,7 +861,12 @@ function createAddonSelect(removable = true){
 
     controls.appendChild(removeBtn)
     wrapper.appendChild(controls)
-    attachSwipeToReveal(wrapper)
+    attachSwipeToReveal(wrapper, ()=>{
+      removeRowWithAnimation(wrapper, ()=>{
+        updateAddonUI()
+        calc()
+      })
+    })
   }
 
   return wrapper
@@ -919,11 +917,9 @@ function updateAddonUI(){
   if(emptyPicker){
     emptyPicker.style.display = "flex"
     emptyPicker.style.marginTop = count === 0 ? "12px" : "8px"
-    emptyPicker.textContent = count === 0
-      ? "尚未選擇加料 Choose add-on"
-      : "+"
+    emptyPicker.textContent = "+"
     emptyPicker.classList.toggle("picker-field--placeholder", count === 0)
-    emptyPicker.classList.toggle("picker-field--plus", count > 0)
+    emptyPicker.classList.add("picker-field--plus")
   }
   const addonSwipeHint = document.getElementById("addonSwipeHint")
   if(addonSwipeHint){
@@ -933,7 +929,7 @@ function updateAddonUI(){
 }
 
 function getSauceDisplayText(value){
-  if(!value) return NO_SAUCE_LABEL
+  if(!value) return "+"
   const en = sauceNameMap[value] || ""
   return en ? `${value} ${en}` : value
 }
@@ -973,6 +969,8 @@ function updateSaucePickerLabel(target = "sauce1"){
     if(!picker) return
     picker.textContent = getSauceDisplayText(value)
     picker.classList.toggle("picker-field--placeholder", !value)
+    picker.classList.toggle("picker-field--plus", !value)
+    picker.classList.toggle("picker-field-with-minus", !!value)
     if(removeBtn){
       removeBtn.style.display = value ? "flex" : "none"
     }
@@ -988,6 +986,8 @@ function updateSaucePickerLabel(target = "sauce1"){
   if(display){
     display.textContent = getSauceDisplayText(value)
     display.classList.toggle("picker-field--placeholder", !value)
+    display.classList.toggle("picker-field--plus", !value)
+    display.classList.toggle("picker-field-with-minus", !!value)
   }
 }
 
@@ -1134,8 +1134,8 @@ function createSauceSelect(){
 
   const display = document.createElement("div")
   display.dataset.role = "sauce-display"
-  display.className = "picker-field picker-field-fill picker-field--placeholder picker-field-with-minus"
-  display.textContent = NO_SAUCE_LABEL
+  display.className = "picker-field picker-field-fill picker-field--placeholder picker-field--plus"
+  display.textContent = "+"
   display.onclick = (e)=>{
     e.stopPropagation()
     if(isPickerTapSuppressed()) return
@@ -1162,7 +1162,12 @@ removeBtn.onclick = (e)=>{
   wrapper.appendChild(display)
   wrapper.appendChild(hiddenValue)
   wrapper.appendChild(removeBtn)
-  attachSwipeToReveal(wrapper)
+  attachSwipeToReveal(wrapper, ()=>{
+    removeRowWithAnimation(wrapper, ()=>{
+      updateSauce2Visibility()
+      calc()
+    })
+  })
 
   return wrapper
 }
@@ -1459,7 +1464,9 @@ lastMainForFeedback = main
 }
 
 init()
-attachSwipeToReveal(document.getElementById("sauce1Row"))
+attachSwipeToReveal(document.getElementById("sauce1Row"), ()=>{
+  removeSauce1()
+})
 
 function updateResultVisibility(){
   const resultEl = document.getElementById("result")

@@ -41,8 +41,8 @@
       ontouchstart="event.stopPropagation()">
   </div>
 </div>
-<div id="mainPicker" class="picker-field picker-field--placeholder" onclick="openMainPicker()" style="margin-top:12px;">
-  尚未選擇口味 Choose flavor
+<div id="mainPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="openMainPicker()" style="margin-top:12px;">
+  +
 </div>
 <select id="main" onchange="calc()" style="display:none;"></select>
 </div>
@@ -54,8 +54,8 @@
   <span id="addonLabel" style="color:#8e8e93;font-size:13px;font-weight:400;">Add-ons (0)</span>
 </label>
 <div id="addonList" style="min-height:10px;"></div>
-<div id="addonEmptyPicker" class="picker-field picker-field--placeholder" onclick="openAddonPicker(addonActiveGroup)" style="margin-top:12px;">
-  尚未選擇加料 Choose add-on
+<div id="addonEmptyPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="openAddonPicker(addonActiveGroup)" style="margin-top:12px;">
+  +
 </div>
 <div id="addonSwipeHint" class="swipe-hint" style="display:none;">左滑可刪除 Swipe to delete</div>
 </div>
@@ -67,8 +67,8 @@
   <span style="color:#8e8e93;font-size:13px;font-weight:400;">Sauce</span>
 </label>
 <div id="sauce1Row" class="picker-row-with-minus" style="margin-top:12px;">
-  <div id="sauce1Picker" class="picker-field picker-field-fill picker-field--placeholder picker-field-with-minus" onclick="openSauce1Picker()">
-    不加醬 No sauce
+  <div id="sauce1Picker" class="picker-field picker-field-fill picker-field--placeholder picker-field--plus" onclick="openSauce1Picker()">
+    +
   </div>
   <button type="button" id="sauce1RemoveBtn" class="minus-btn" onclick="removeSauce1()" style="display:none;">
     −

@@ -145,6 +145,11 @@ const RECENT_KEYS = {
   addon: "recent_addon",
   sauce: "recent_sauce"
 }
+const RECENT_COUNT_KEYS = {
+  main: "recent_count_main",
+  addon: "recent_count_addon",
+  sauce: "recent_count_sauce"
+}
 const SWIPE_HINT_KEYS = {
   addon: "swipe_hint_seen_addon",
   sauce: "swipe_hint_seen_sauce"
@@ -266,7 +271,28 @@ function getRecentItems(type, validItems = null){
 function saveRecentItem(type, item){
   if(!item) return
   const key = RECENT_KEYS[type]
+  const countKey = RECENT_COUNT_KEYS[type]
   if(!key) return
+  let counts = {}
+  if(countKey){
+    try {
+      const parsed = JSON.parse(localStorage.getItem(countKey) || "{}")
+      if(parsed && typeof parsed === "object" && !Array.isArray(parsed)){
+        counts = parsed
+      }
+    } catch (_) {
+      counts = {}
+    }
+    counts[item] = Number(counts[item] || 0) + 1
+    try {
+      localStorage.setItem(countKey, JSON.stringify(counts))
+    } catch (_) {
+      // no-op
+    }
+    if(counts[item] < 2){
+      return
+    }
+  }
   const next = [item, ...getRecentItems(type).filter(v => v !== item)].slice(0, RECENT_LIMIT)
   try {
     localStorage.setItem(key, JSON.stringify(next))

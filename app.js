@@ -141,11 +141,21 @@ function shouldBreakBilingualLine(zh, en){
   return (zh.length + en.length >= 24) || en.length >= 17
 }
 
+function shouldBreakModalBilingualLine(zh, en){
+  if(!zh || !en) return false
+  return (zh.length + en.length >= 30) || en.length >= 22
+}
+
 function setBilingualPickerText(el, zh, en){
   if(!el) return
   if(!en){
     el.classList.remove("picker-field--bilingual-break")
     el.textContent = zh || ""
+    return
+  }
+  if(shouldBreakBilingualLine(zh, en)){
+    el.classList.add("picker-field--bilingual-break")
+    el.innerHTML = `<span class="picker-zh-line">${escapeHtml(zh)}</span><span class="picker-en-break">${escapeHtml(en)}</span>`
     return
   }
   el.classList.remove("picker-field--bilingual-break")
@@ -193,7 +203,7 @@ function setBilingualModalTitle(el, zh, en){
     el.textContent = zh || ""
     return
   }
-  if(shouldBreakBilingualLine(zh, en)){
+  if(shouldBreakModalBilingualLine(zh, en)){
     el.classList.add("modal-title-break")
     el.innerHTML = `<span class="modal-zh-inline">${escapeHtml(zh)}</span><span class="modal-en-break">${escapeHtml(en)}</span>`
     return
@@ -698,6 +708,7 @@ const addonNameMap = {
   "照燒雞肉":"Chicken Teriyaki",
   "鮮嫩雞柳":"Chicken Strips",
   "香烤雞肉":"Oven Roasted Chicken Breast",
+  "厚切嫩牛":"Diced Beef",
   "火腿(4片)":"Ham (4 slices)",
   "火腿(1片)":"Ham (1 slice)",
   "培根(1條)":"Bacon (1 strip)",
@@ -1237,11 +1248,19 @@ function addAddon(defaultValue = ""){
   setAddonValue(wrapper, defaultValue)
 
   container.appendChild(wrapper)
+  updateAddonRowSpacing()
   animateRowEnter(wrapper)
   flashPickerSelection(wrapper.querySelector(".picker-field"))
   updateAddonUI()
   calc()
   return true
+}
+
+function updateAddonRowSpacing(){
+  const rows = document.querySelectorAll("#addonList .addon-row")
+  rows.forEach((row, idx)=>{
+    row.style.marginTop = idx === 0 ? "6px" : "8px"
+  })
 }
 
 function updateAddonUI(){
@@ -1251,11 +1270,12 @@ function updateAddonUI(){
   label.textContent = `Add-ons (${count})`
   if(emptyPicker){
     emptyPicker.style.display = "flex"
-    emptyPicker.style.marginTop = count === 0 ? "12px" : "8px"
+    emptyPicker.style.marginTop = count === 0 ? "6px" : "8px"
     emptyPicker.textContent = "+"
     emptyPicker.classList.toggle("picker-field--placeholder", count === 0)
     emptyPicker.classList.add("picker-field--plus")
   }
+  updateAddonRowSpacing()
   updateSectionClearButtons()
 }
 

@@ -33,7 +33,7 @@
 </div>
 
 <!-- 主餐 -->
-<section class="option-section">
+<section class="option-section option-section-main">
 <div class="section-head section-head-main">
 <div class="section-head-inline">
   <span class="section-title">6吋潛艇堡</span>
@@ -41,7 +41,7 @@
 </div>
 <button type="button" id="mainClearBtn" class="section-clear-btn" onclick="clearMainSection()" style="visibility:hidden;">Clear</button>
 </div>
-<div id="mainPickerRow" style="margin-top:4px;">
+<div id="mainPickerRow" class="section-picker-top">
   <div id="mainPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="openMainPicker()">
     +
   </div>
@@ -64,8 +64,8 @@
   </div>
   <button type="button" id="addonClearBtn" class="section-clear-btn" onclick="clearAddonSection()" style="visibility:hidden;">Clear</button>
 </div>
-<div id="addonList" style="min-height:10px;"></div>
-<div id="addonEmptyPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="openAddonPicker(addonActiveGroup)" style="margin-top:4px;">
+<div id="addonList" style="min-height:0;"></div>
+<div id="addonEmptyPicker" class="picker-field picker-field--placeholder picker-field--plus section-picker-top" onclick="openAddonPicker(addonActiveGroup)">
   +
 </div>
 </section>
@@ -79,7 +79,7 @@
   </div>
   <button type="button" id="sauceClearBtn" class="section-clear-btn" onclick="clearSauceSection()" style="visibility:hidden;">Clear</button>
 </div>
-<div id="sauce1Row" style="margin-top:4px;">
+<div id="sauce1Row" class="section-picker-top">
   <div id="sauce1Picker" class="picker-field picker-field-fill picker-field--placeholder picker-field--plus" onclick="openSauce1Picker()">
     +
   </div>

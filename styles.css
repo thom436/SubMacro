@@ -18,7 +18,7 @@ body {
     radial-gradient(120% 120% at 14% -12%, rgba(249,250,252,0.96) 0%, rgba(237,239,243,0.9) 44%, rgba(224,228,235,0.9) 100%),
     linear-gradient(180deg, #eef1f5 0%, #dde2ea 100%);
   margin: 0;
-  padding: 20px;
+  padding: 14px 20px 20px;
   color: #161b24;
   line-height: 1.45;
   padding-bottom: calc(180px + env(safe-area-inset-bottom));
@@ -32,7 +32,7 @@ body {
   font-size: 38px;
   font-weight: 800;
   letter-spacing: 0.5px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   display: flex;
   align-items: baseline;
   -webkit-font-smoothing: antialiased;
@@ -59,7 +59,7 @@ body {
 
 .top-actions {
   position: fixed;
-  top: calc(10px + env(safe-area-inset-top));
+  top: calc(6px + env(safe-area-inset-top));
   right: 14px;
   z-index: 1200;
   display: flex;
@@ -73,7 +73,7 @@ body {
   display: flex;
   justify-content: flex-end;
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .icon-symbol-btn {
@@ -174,6 +174,10 @@ body {
   margin-bottom: 20px;
 }
 
+.option-section-main {
+  margin-bottom: 14px;
+}
+
 .section-head {
   margin-bottom: 4px;
 }
@@ -204,8 +208,12 @@ body {
 }
 
 .section-toggle-under {
-  margin-top: 8px;
+  margin-top: 6px;
   justify-content: flex-end;
+}
+
+.section-picker-top {
+  margin-top: 6px;
 }
 
 .section-title {
@@ -237,6 +245,8 @@ body {
   font-weight: 520;
   letter-spacing: 0.01em;
   padding: 2px 0;
+  margin-right: 12px;
+  transform: translateY(2px);
   cursor: pointer;
   transition: color 0.16s ease, opacity 0.16s ease;
 }
@@ -313,7 +323,7 @@ select:focus-visible {
 }
 
 .picker-field {
-  padding: 14px;
+  padding: 12px 12px;
   border-radius: 28px;
   border: none;
   background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(229,233,240,0.38) 100%);
@@ -332,20 +342,11 @@ select:focus-visible {
 }
 
 .picker-field:not(.picker-field--plus) {
-  padding-right: 46px;
+  padding-right: 12px;
 }
 
 .picker-field:not(.picker-field--plus)::after {
-  content: "›";
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-52%);
-  font-size: 30px;
-  font-weight: 300;
-  line-height: 1;
-  color: rgba(126,132,143,0.92);
-  pointer-events: none;
+  content: none;
 }
 
 .picker-field-with-minus::after {
@@ -474,9 +475,9 @@ select:focus-visible {
 
 .modal-en-inline {
   color: inherit;
-  margin-left: 8px;
+  margin-left: 4px;
   font-size: 0.88em;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   line-height: 1.3;
   display: inline-block;
   transform: translateY(0.5px);
@@ -515,6 +516,12 @@ select:focus-visible {
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 2px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal-recent-row::-webkit-scrollbar {
+  display: none;
 }
 
 .modal-recent-btn {
@@ -579,7 +586,7 @@ select:focus-visible {
 }
 
 .picker-field-with-minus {
-  padding-right: 52px;
+  padding-right: 12px;
   transition: transform 0.2s ease;
 }
 
@@ -1011,6 +1018,13 @@ button:active {
 #sauceItems > div,
 #quickSearchItems > div {
   border-bottom: 1px solid rgba(181,185,194,0.28) !important;
+}
+
+#mainItems,
+#addonItems,
+#sauceItems,
+#quickSearchItems {
+  overflow-x: hidden !important;
 }
 
 .copy-toast.show {

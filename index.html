@@ -25,6 +25,8 @@
   <button type="button" class="icon-symbol-btn" aria-label="搜尋 Search" title="搜尋 Search" onclick="openQuickSearch()">
     ⌕
   </button>
+</div>
+<div class="reset-row">
   <button type="button" class="reset-btn" aria-label="重設 Reset" title="重設 Reset" onclick="resetAll()">
     ↻
   </button>
@@ -135,7 +137,7 @@
 <div id="quickSearchModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;z-index:10000;">
   <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-top-left-radius:20px;border-top-right-radius:20px;padding:16px;height:70vh;display:flex;flex-direction:column;">
     <div style="font-size:16px;font-weight:700;margin-bottom:8px;">快速搜尋 Quick search</div>
-    <input id="quickSearchInput" class="modal-search-input" type="text" placeholder="搜尋口味或加料 Search flavor or add-ons" autocomplete="off" oninput="renderQuickSearchItems()">
+    <input id="quickSearchInput" class="modal-search-input" type="text" placeholder="搜尋口味加料醬料 Search flavor add-ons sauce" autocomplete="off" oninput="renderQuickSearchItems()">
     <div id="quickSearchItems" style="flex:1;overflow:auto;"></div>
   </div>
 </div>

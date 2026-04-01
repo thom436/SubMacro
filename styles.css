@@ -57,11 +57,21 @@ body {
 }
 
 .top-actions {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top));
+  right: 14px;
+  z-index: 1200;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
-  margin-top: -22px;
+  gap: 0;
+  margin: 0;
+}
+
+.reset-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0;
   margin-bottom: 16px;
 }
 
@@ -255,11 +265,25 @@ select:focus-visible {
 .picker-zh-line {
   display: block;
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .picker-en-break {
   display: block;
   margin-top: 2px;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.picker-field.picker-field--bilingual-break {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
 }
 
 .picker-field.picker-field--plus {
@@ -269,6 +293,8 @@ select:focus-visible {
 
 .modal-search-input {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   margin: 6px 0 10px;
   padding: 10px 12px;
   border-radius: 12px;
@@ -445,6 +471,7 @@ select:focus-visible {
 
 .picker-row-with-minus.removing .picker-field {
   opacity: 0.9;
+  animation: deletePopField 0.22s cubic-bezier(.22,.61,.36,1) forwards;
 }
 
 .picker-row-with-minus.removing .minus-btn {
@@ -477,6 +504,19 @@ select:focus-visible {
   100% {
     opacity: 0;
     transform: translateX(-16px) scale(0.985);
+  }
+}
+
+@keyframes deletePopField {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: saturate(1);
+  }
+  100% {
+    opacity: 0.62;
+    transform: scale(0.988);
+    filter: saturate(0.9);
   }
 }
 

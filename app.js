@@ -3,6 +3,34 @@ function haptic() {
   if (navigator.vibrate) navigator.vibrate(8);
 }
 
+let popAudioCtx = null
+
+function playDeletePop(){
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext
+    if(!Ctx) return
+    if(!popAudioCtx) popAudioCtx = new Ctx()
+    if(popAudioCtx.state === "suspended") popAudioCtx.resume()
+
+    const now = popAudioCtx.currentTime
+    const osc = popAudioCtx.createOscillator()
+    const gain = popAudioCtx.createGain()
+
+    osc.type = "triangle"
+    osc.frequency.setValueAtTime(560, now)
+    osc.frequency.exponentialRampToValueAtTime(360, now + 0.085)
+
+    gain.gain.setValueAtTime(0.0001, now)
+    gain.gain.exponentialRampToValueAtTime(0.03, now + 0.01)
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09)
+
+    osc.connect(gain)
+    gain.connect(popAudioCtx.destination)
+    osc.start(now)
+    osc.stop(now + 0.1)
+  } catch(_) {}
+}
+
 const data = {
 main:{
 "照燒雞肉":{cal:362,protein:27},
@@ -139,13 +167,16 @@ function shouldBreakBilingualLine(zh, en){
 function setBilingualPickerText(el, zh, en){
   if(!el) return
   if(!en){
+    el.classList.remove("picker-field--bilingual-break")
     el.textContent = zh || ""
     return
   }
   if(shouldBreakBilingualLine(zh, en)){
+    el.classList.add("picker-field--bilingual-break")
     el.innerHTML = `<span class="picker-zh-line">${escapeHtml(zh)}</span><span class="picker-en-break">${escapeHtml(en)}</span>`
     return
   }
+  el.classList.remove("picker-field--bilingual-break")
   el.textContent = `${zh} ${en}`
 }
 
@@ -332,6 +363,7 @@ function removeRowWithAnimation(row, onDone){
   }
 
   closeSwipeRow(row)
+  playDeletePop()
   row.classList.add("removing")
 
   setTimeout(()=>{
@@ -477,8 +509,10 @@ function removeMain(){
   if(!mainSelect) return
 
   const applyRemove = ()=>{
+    playDeletePop()
     mainSelect.value = ""
     updateMainPickerLabel()
+    animatePickerAppear(document.getElementById("mainPicker"))
     calc()
   }
 
@@ -909,13 +943,17 @@ function renderQuickSearchItems(){
     hint.style.padding = "14px 12px"
     hint.style.fontSize = "13px"
     hint.style.color = "#8e8e93"
-    hint.textContent = "輸入關鍵字以搜尋口味與加料"
+    hint.textContent = "輸入關鍵字以搜尋口味、加料、醬料"
     itemsEl.appendChild(hint)
     return
   }
 
   const selectedMain = document.getElementById("main").value
   const selectedAddon = new Set(getSelectedAddonValues())
+  const sauce1Value = document.getElementById("sauce1").value
+  const sauce2ValueInput = document.querySelector('#sauce2List input[data-role="sauce-value"]')
+  const sauce2Value = sauce2ValueInput ? sauce2ValueInput.value : ""
+  const selectedSauce = new Set([sauce1Value, sauce2Value].filter(Boolean))
 
   const mainMatches = Object.keys(data.main)
     .filter(name => {
@@ -931,7 +969,14 @@ function renderQuickSearchItems(){
     })
     .sort((a,b)=> data.addon[b].cal - data.addon[a].cal)
 
-  if(!mainMatches.length && !addonMatches.length){
+  const sauceMatches = Object.keys(data.sauce)
+    .filter(name => {
+      const en = sauceNameMap[name] || ""
+      return `${name} ${en}`.toLowerCase().includes(query)
+    })
+    .sort((a,b)=> data.sauce[b].cal - data.sauce[a].cal)
+
+  if(!mainMatches.length && !addonMatches.length && !sauceMatches.length){
     const empty = document.createElement("div")
     empty.style.padding = "14px 12px"
     empty.style.fontSize = "13px"
@@ -1055,6 +1100,87 @@ function renderQuickSearchItems(){
     itemsEl.appendChild(row)
   }
 
+  const renderSauceItem = (name)=>{
+    const row = document.createElement("div")
+    row.style.padding = "12px"
+    row.style.borderBottom = "1px solid #eee"
+    row.style.cursor = "pointer"
+    row.style.display = "flex"
+    row.style.justifyContent = "space-between"
+    row.style.alignItems = "center"
+
+    const en = sauceNameMap[name] || ""
+    const left = document.createElement("div")
+    left.className = "modal-item-title"
+    left.textContent = en ? `${name} ${en}` : name
+    left.style.paddingRight = "10px"
+
+    const right = document.createElement("div")
+    right.style.fontSize = "12px"
+    right.style.color = "var(--kcal-muted)"
+    right.style.whiteSpace = "nowrap"
+    right.textContent = `${data.sauce[name].cal} kcal`
+
+    if(selectedSauce.has(name)){
+      row.style.opacity = "0.45"
+      row.style.cursor = "not-allowed"
+      const mark = document.createElement("span")
+      mark.className = "modal-checkmark"
+      mark.style.marginLeft = "8px"
+      mark.textContent = "✓"
+      const rightWrap = document.createElement("div")
+      rightWrap.style.display = "flex"
+      rightWrap.style.alignItems = "center"
+      rightWrap.style.gap = "8px"
+      rightWrap.appendChild(right)
+      rightWrap.appendChild(mark)
+      row.appendChild(left)
+      row.appendChild(rightWrap)
+    } else {
+      row.appendChild(left)
+      row.appendChild(right)
+      row.onclick = ()=>{
+        const sauce1El = document.getElementById("sauce1")
+        const currentSauce1 = sauce1El ? sauce1El.value : ""
+        const currentSauce2Input = document.querySelector('#sauce2List input[data-role="sauce-value"]')
+        const currentSauce2 = currentSauce2Input ? currentSauce2Input.value : ""
+
+        if(!currentSauce1){
+          sauce1El.value = name
+          updateSaucePickerLabel("sauce1")
+          flashPickerSelection(document.getElementById("sauce1Picker"))
+        } else if(!currentSauce2){
+          const list = document.getElementById("sauce2List")
+          let sauce2Row = list ? list.querySelector(".sauce-row") : null
+          if(!sauce2Row && list){
+            sauce2Row = createSauceSelect()
+            list.appendChild(sauce2Row)
+            animateRowEnter(sauce2Row)
+          }
+          const hidden = sauce2Row ? sauce2Row.querySelector('input[data-role="sauce-value"]') : null
+          if(hidden) hidden.value = name
+          updateSaucePickerLabel("sauce2")
+          const display = sauce2Row ? sauce2Row.querySelector('[data-role="sauce-display"]') : null
+          flashPickerSelection(display)
+        } else {
+          const sauce2Row = document.querySelector("#sauce2List .sauce-row")
+          const hidden = sauce2Row ? sauce2Row.querySelector('input[data-role="sauce-value"]') : null
+          if(hidden) hidden.value = name
+          updateSaucePickerLabel("sauce2")
+          const display = sauce2Row ? sauce2Row.querySelector('[data-role="sauce-display"]') : null
+          flashPickerSelection(display)
+        }
+
+        saveRecentItem("sauce", name)
+        updateSauce2Visibility()
+        closeQuickSearch()
+        calc()
+      }
+    }
+
+    itemsEl.appendChild(row)
+  }
+
   if(mainMatches.length){
     renderSectionTitle("口味 Flavor")
     mainMatches.forEach(renderMainItem)
@@ -1063,6 +1189,11 @@ function renderQuickSearchItems(){
   if(addonMatches.length){
     renderSectionTitle("加料 Add-ons")
     addonMatches.forEach(renderAddonItem)
+  }
+
+  if(sauceMatches.length){
+    renderSectionTitle("醬料 Sauce")
+    sauceMatches.forEach(renderSauceItem)
   }
 }
 
@@ -1501,6 +1632,7 @@ function removeSauce1(){
   if(!sauce1) return
 
   const applyRemove = ()=>{
+    playDeletePop()
     const sauce2ValueInput = document.querySelector('#sauce2List input[data-role="sauce-value"]')
     const sauce2Value = sauce2ValueInput ? sauce2ValueInput.value : ""
 
@@ -1516,6 +1648,8 @@ function removeSauce1(){
     updateSaucePickerLabel("sauce1")
     if(sauce2Value && sauce1Row){
       animateRowEnter(sauce1Row)
+    } else {
+      animatePickerAppear(document.getElementById("sauce1Picker"))
     }
     calc()
   }

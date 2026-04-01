@@ -3,34 +3,6 @@ function haptic() {
   if (navigator.vibrate) navigator.vibrate(8);
 }
 
-let popAudioCtx = null
-
-function playDeletePop(){
-  try {
-    const Ctx = window.AudioContext || window.webkitAudioContext
-    if(!Ctx) return
-    if(!popAudioCtx) popAudioCtx = new Ctx()
-    if(popAudioCtx.state === "suspended") popAudioCtx.resume()
-
-    const now = popAudioCtx.currentTime
-    const osc = popAudioCtx.createOscillator()
-    const gain = popAudioCtx.createGain()
-
-    osc.type = "triangle"
-    osc.frequency.setValueAtTime(560, now)
-    osc.frequency.exponentialRampToValueAtTime(360, now + 0.085)
-
-    gain.gain.setValueAtTime(0.0001, now)
-    gain.gain.exponentialRampToValueAtTime(0.03, now + 0.01)
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09)
-
-    osc.connect(gain)
-    gain.connect(popAudioCtx.destination)
-    osc.start(now)
-    osc.stop(now + 0.1)
-  } catch(_) {}
-}
-
 const data = {
 main:{
 "照燒雞肉":{cal:362,protein:27},
@@ -176,13 +148,8 @@ function setBilingualPickerText(el, zh, en){
     el.textContent = zh || ""
     return
   }
-  if(shouldBreakBilingualLine(zh, en)){
-    el.classList.add("picker-field--bilingual-break")
-    el.innerHTML = `<span class="picker-zh-line">${escapeHtml(zh)}</span><span class="picker-en-break">${escapeHtml(en)}</span>`
-    return
-  }
   el.classList.remove("picker-field--bilingual-break")
-  el.textContent = `${zh} ${en}`
+  el.innerHTML = `<span class="picker-zh-inline">${escapeHtml(zh)}</span> <span class="picker-en-inline">${escapeHtml(en)}</span>`
 }
 
 function buildGroups(seedGroups, allItems, extraGroupName = "其他"){
@@ -217,6 +184,22 @@ function formatKcal(value){
 function formatProtein(value){
   const rounded = Math.round(value * 10) / 10
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
+}
+
+function setBilingualModalTitle(el, zh, en){
+  if(!el) return
+  if(!en){
+    el.classList.remove("modal-title-break")
+    el.textContent = zh || ""
+    return
+  }
+  if(shouldBreakBilingualLine(zh, en)){
+    el.classList.add("modal-title-break")
+    el.innerHTML = `<span class="modal-zh-inline">${escapeHtml(zh)}</span><span class="modal-en-break">${escapeHtml(en)}</span>`
+    return
+  }
+  el.classList.remove("modal-title-break")
+  el.innerHTML = `<span class="modal-zh-inline">${escapeHtml(zh)}</span> <span class="modal-en-inline">${escapeHtml(en)}</span>`
 }
 
 function createModalMetaWrap(metaContent, options = {}){
@@ -416,7 +399,6 @@ function removeRowWithAnimation(row, onDone){
   }
 
   closeSwipeRow(row)
-  playDeletePop()
   row.classList.add("removing")
 
   setTimeout(()=>{
@@ -533,8 +515,6 @@ let mainActiveGroup = ""
 function updateMainPickerLabel(){
   const value = document.getElementById("main").value
   const picker = document.getElementById("mainPicker")
-  const removeBtn = document.getElementById("mainRemoveBtn")
-  const row = document.getElementById("mainPickerRow")
   if(!picker) return
 
   if(!value){
@@ -542,8 +522,7 @@ function updateMainPickerLabel(){
     picker.classList.add("picker-field--placeholder")
     picker.classList.add("picker-field--plus")
     picker.classList.remove("picker-field-with-minus")
-    if(removeBtn) removeBtn.style.display = "none"
-    closeSwipeRow(row)
+    updateSectionClearButtons()
     return
   }
 
@@ -551,34 +530,18 @@ function updateMainPickerLabel(){
   setBilingualPickerText(picker, value, en)
   picker.classList.remove("picker-field--placeholder")
   picker.classList.remove("picker-field--plus")
-  picker.classList.add("picker-field-with-minus")
-  if(removeBtn) removeBtn.style.display = "flex"
+  picker.classList.remove("picker-field-with-minus")
+  updateSectionClearButtons()
 }
 
-function removeMain(){
+function clearMainSection(){
   const mainSelect = document.getElementById("main")
-  const mainRow = document.getElementById("mainPickerRow")
-  const mainDisplay = mainRow ? mainRow.querySelector(".picker-field") : null
   if(!mainSelect) return
-
-  const applyRemove = ()=>{
-    playDeletePop()
-    mainSelect.value = ""
-    updateMainPickerLabel()
-    animatePickerAppear(document.getElementById("mainPicker"))
-    calc()
-  }
-
-  if(mainDisplay){
-    mainDisplay.classList.add("main-removing")
-    setTimeout(()=>{
-      mainDisplay.classList.remove("main-removing")
-      applyRemove()
-    }, 170)
-    return
-  }
-
-  applyRemove()
+  mainSelect.value = ""
+  document.getElementById("double").checked = false
+  updateMainPickerLabel()
+  animatePickerAppear(document.getElementById("mainPicker"))
+  calc()
 }
 
 function openMainPicker(defaultGroup = ""){
@@ -667,7 +630,7 @@ function renderMainItems(group){
     const en = mainNameMap[name] || ""
     const textWrap = document.createElement("div")
     textWrap.className = "modal-item-title"
-    textWrap.textContent = en ? `${name} ${en}` : name
+    setBilingualModalTitle(textWrap, name, en)
     textWrap.style.paddingRight = "10px"
 
     const efficiency = ((data.main[name].protein / data.main[name].cal) * 100).toFixed(1)
@@ -877,7 +840,7 @@ function renderAddonItems(group){
     const en = addonNameMap[name] || ""
     const textWrap = document.createElement("div")
     textWrap.className = "modal-item-title"
-    textWrap.textContent = en ? `${name} ${en}` : name
+    setBilingualModalTitle(textWrap, name, en)
     textWrap.style.paddingRight = "10px"
 
     const rightWrap = createModalMetaWrap(`${data.addon[name].cal} kcal`, {
@@ -1033,7 +996,7 @@ function renderQuickSearchItems(){
     const en = mainNameMap[name] || ""
     const left = document.createElement("div")
     left.className = "modal-item-title"
-    left.textContent = en ? `${name} ${en}` : name
+    setBilingualModalTitle(left, name, en)
     left.style.paddingRight = "10px"
 
     const rightWrap = createModalMetaWrap(`${data.main[name].cal} kcal`, {
@@ -1074,7 +1037,7 @@ function renderQuickSearchItems(){
     const en = addonNameMap[name] || ""
     const left = document.createElement("div")
     left.className = "modal-item-title"
-    left.textContent = en ? `${name} ${en}` : name
+    setBilingualModalTitle(left, name, en)
     left.style.paddingRight = "10px"
 
     const rightWrap = createModalMetaWrap(`${data.addon[name].cal} kcal`, {
@@ -1112,7 +1075,7 @@ function renderQuickSearchItems(){
     const en = sauceNameMap[name] || ""
     const left = document.createElement("div")
     left.className = "modal-item-title"
-    left.textContent = en ? `${name} ${en}` : name
+    setBilingualModalTitle(left, name, en)
     left.style.paddingRight = "10px"
 
     const rightWrap = createModalMetaWrap(`${data.sauce[name].cal} kcal`, {
@@ -1216,14 +1179,13 @@ function createAddonSelect(removable = true){
   const wrapper = document.createElement("div")
   wrapper.className = "addon-row"
 
-  wrapper.classList.add("picker-row-with-minus")
   wrapper.style.display = "block"
   wrapper.style.marginTop = "8px"
   wrapper.style.position = "relative"
   wrapper.style.overflow = "visible"
 
   const display = document.createElement("div")
-  display.className = "picker-field picker-field-fill picker-field--placeholder picker-field-with-minus"
+  display.className = "picker-field picker-field-fill picker-field--placeholder"
   display.textContent = "尚未選擇加料"
   display.onclick = ()=>{
     openAddonPicker(addonActiveGroup, wrapper)
@@ -1238,32 +1200,7 @@ function createAddonSelect(removable = true){
   wrapper.appendChild(hiddenValue)
 
   if(removable){
-    const controls = document.createElement("div")
-    controls.style.display = "flex"
-    controls.style.gap = "6px"
-    controls.style.alignItems = "center"
-
-    const removeBtn = document.createElement("button")
-    removeBtn.textContent = "−"
-    removeBtn.dataset.role = "remove-addon"
-    removeBtn.className = "minus-btn"
-
-    removeBtn.onclick = (e) => {
-      e.stopPropagation();
-      removeRowWithAnimation(wrapper, ()=>{
-        updateAddonUI()
-        calc()
-      })
-    }
-
-    controls.appendChild(removeBtn)
-    wrapper.appendChild(controls)
-    attachSwipeToReveal(wrapper, ()=>{
-      removeRowWithAnimation(wrapper, ()=>{
-        updateAddonUI()
-        calc()
-      })
-    })
+    wrapper.dataset.removable = "1"
   }
 
   return wrapper
@@ -1319,11 +1256,7 @@ function updateAddonUI(){
     emptyPicker.classList.toggle("picker-field--placeholder", count === 0)
     emptyPicker.classList.add("picker-field--plus")
   }
-  const addonSwipeHint = document.getElementById("addonSwipeHint")
-  if(addonSwipeHint){
-    addonSwipeHint.style.display = count > 0 ? "block" : "none"
-  }
-
+  updateSectionClearButtons()
 }
 
 function getSauceDisplayText(value){
@@ -1342,9 +1275,7 @@ function updateSauce2Visibility(){
   if(!sauce1Value){
     list.innerHTML = ""
     emptyPicker.style.display = "none"
-    closeSwipeRow(document.getElementById("sauce1Row"))
-    const sauceSwipeHint = document.getElementById("sauceSwipeHint")
-    if(sauceSwipeHint) sauceSwipeHint.style.display = "none"
+    updateSectionClearButtons()
     return
   }
 
@@ -1354,18 +1285,13 @@ function updateSauce2Visibility(){
   if(shouldShowPlus && !wasVisible){
     animatePickerAppear(emptyPicker)
   }
-  const sauceSwipeHint = document.getElementById("sauceSwipeHint")
-  if(sauceSwipeHint){
-    sauceSwipeHint.style.display = sauce1Value ? "block" : "none"
-  }
+  updateSectionClearButtons()
 }
 
 function updateSaucePickerLabel(target = "sauce1"){
   if(target === "sauce1"){
-    const row = document.getElementById("sauce1Row")
     const picker = document.getElementById("sauce1Picker")
     const value = document.getElementById("sauce1").value
-    const removeBtn = document.getElementById("sauce1RemoveBtn")
     if(!picker) return
     if(!value){
       picker.textContent = getSauceDisplayText(value)
@@ -1377,12 +1303,8 @@ function updateSaucePickerLabel(target = "sauce1"){
       setBilingualPickerText(picker, value, en)
       picker.classList.remove("picker-field--placeholder")
       picker.classList.remove("picker-field--plus")
-      picker.classList.add("picker-field-with-minus")
+      picker.classList.remove("picker-field-with-minus")
     }
-    if(removeBtn){
-      removeBtn.style.display = value ? "flex" : "none"
-    }
-    if(!value) closeSwipeRow(row)
     updateSauce2Visibility()
     return
   }
@@ -1403,9 +1325,10 @@ function updateSaucePickerLabel(target = "sauce1"){
       setBilingualPickerText(display, value, en)
       display.classList.remove("picker-field--placeholder")
       display.classList.remove("picker-field--plus")
-      display.classList.add("picker-field-with-minus")
+      display.classList.remove("picker-field-with-minus")
     }
   }
+  updateSectionClearButtons()
 }
 
 
@@ -1462,7 +1385,7 @@ function renderSauceItems(){
     const en = sauceNameMap[name] || ""
     const textWrap = document.createElement("div")
     textWrap.className = "modal-item-title"
-    textWrap.textContent = en ? `${name} ${en}` : name
+    setBilingualModalTitle(textWrap, name, en)
     textWrap.style.paddingRight = "10px"
     const rightWrap = createModalMetaWrap(`${data.sauce[name].cal} kcal`, {
       showCheck: name === selectedValue
@@ -1535,7 +1458,6 @@ function createSauceSelect(){
     openSaucePicker("sauce2")
   }
 
-  wrapper.classList.add("picker-row-with-minus")
   wrapper.style.display = "block"
   wrapper.style.marginTop = "8px"
   wrapper.style.position = "relative"
@@ -1555,27 +1477,8 @@ function createSauceSelect(){
   hiddenValue.dataset.role = "sauce-value"
   hiddenValue.value = ""
 
-  const removeBtn = document.createElement("button")
-  removeBtn.textContent = "−"
-  removeBtn.className = "minus-btn"
-
-removeBtn.onclick = (e)=>{
-  e.stopPropagation()
-  removeRowWithAnimation(wrapper, ()=>{
-    updateSauce2Visibility()
-    calc()
-  })
-}
-
   wrapper.appendChild(display)
   wrapper.appendChild(hiddenValue)
-  wrapper.appendChild(removeBtn)
-  attachSwipeToReveal(wrapper, ()=>{
-    removeRowWithAnimation(wrapper, ()=>{
-      updateSauce2Visibility()
-      calc()
-    })
-  }, ()=> !!hiddenValue.value)
 
   return wrapper
 }
@@ -1603,46 +1506,37 @@ function addSauce2(){
   addSauce2Internal()
 }
 
-function removeSauce1(){
+function clearSauceSection(){
   const sauce1 = document.getElementById("sauce1")
-  const sauce2List = document.getElementById("sauce2List")
-  const sauce1Row = document.getElementById("sauce1Row")
-  const sauce1Display = sauce1Row ? sauce1Row.querySelector(".picker-field") : null
   if(!sauce1) return
 
-  const applyRemove = ()=>{
-    playDeletePop()
-    const sauce2ValueInput = document.querySelector('#sauce2List input[data-role="sauce-value"]')
-    const sauce2Value = sauce2ValueInput ? sauce2ValueInput.value : ""
+  const sauce2List = document.getElementById("sauce2List")
+  sauce1.value = ""
+  if(sauce2List) sauce2List.innerHTML = ""
+  updateSaucePickerLabel("sauce1")
+  animatePickerAppear(document.getElementById("sauce1Picker"))
+  calc()
+}
 
-    // If sauce 2 exists, promote it to sauce 1; otherwise clear sauce 1.
-    if(sauce2Value){
-      sauce1.value = sauce2Value
-    } else {
-      sauce1.value = ""
-    }
+function clearAddonSection(){
+  const addonList = document.getElementById("addonList")
+  if(addonList) addonList.innerHTML = ""
+  updateAddonUI()
+  calc()
+}
 
-    if(sauce2List) sauce2List.innerHTML = ""
+function updateSectionClearButtons(){
+  const mainClearBtn = document.getElementById("mainClearBtn")
+  const addonClearBtn = document.getElementById("addonClearBtn")
+  const sauceClearBtn = document.getElementById("sauceClearBtn")
+  const hasMain = !!document.getElementById("main").value
+  const hasAddon = document.querySelectorAll("#addonList .addon-row").length > 0
+  const hasSauce1 = !!document.getElementById("sauce1").value
+  const hasSauce2 = !!document.querySelector('#sauce2List input[data-role="sauce-value"]')?.value
 
-    updateSaucePickerLabel("sauce1")
-    if(sauce2Value && sauce1Row){
-      animateRowEnter(sauce1Row)
-    } else {
-      animatePickerAppear(document.getElementById("sauce1Picker"))
-    }
-    calc()
-  }
-
-  if(sauce1Display){
-    sauce1Display.classList.add("sauce-main-removing")
-    setTimeout(()=>{
-      sauce1Display.classList.remove("sauce-main-removing")
-      applyRemove()
-    }, 170)
-    return
-  }
-
-  applyRemove()
+  if(mainClearBtn) mainClearBtn.style.visibility = hasMain ? "visible" : "hidden"
+  if(addonClearBtn) addonClearBtn.style.visibility = hasAddon ? "visible" : "hidden"
+  if(sauceClearBtn) sauceClearBtn.style.visibility = (hasSauce1 || hasSauce2) ? "visible" : "hidden"
 }
 
 let lastCal = 0;
@@ -1668,7 +1562,7 @@ function animateNumber(el, start, end, decimals=1, duration=300) {
 function showResultHint(){
   const resultEl = document.getElementById("result")
   if(resultMode !== "hint"){
-    resultEl.innerHTML = `<div style="font-size:14px;color:#8e8e93;font-weight:500;">可選擇醬料，或留空不加醬 Sauce is optional</div>`
+    resultEl.innerHTML = `<div style="font-size:14px;line-height:1.4;color:#8e8e93;font-weight:500;letter-spacing:0.01em;">可選擇醬料，或留空不加醬 Sauce is optional</div>`
     resultMode = "hint"
   }
 }
@@ -1678,21 +1572,26 @@ function showResultStats(summaryText, breakdownHtml){
   if(resultMode !== "stats"){
     resultEl.innerHTML =
 `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-  <div style="font-size:20px;font-weight:600;">🔥 <span id="calVal">0.0</span> kcal</div>
+  <div style="font-size:20px;line-height:1.15;font-weight:600;">🔥 <span id="calVal">0.0</span> kcal</div>
   <button id="copyShareBtn" class="result-copy-btn" type="button" aria-label="複製結果 Copy result" title="複製結果 Copy result" onclick="copyResultSummary()">
-    <span class="copy-icon-stack" aria-hidden="true"><span class="copy-icon-fold"></span></span>
+    <span class="copy-icon-stack" aria-hidden="true">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M12.5 2.5h5.2L22 6.8v10.1c0 1.44-1.16 2.6-2.6 2.6h-4.7v-2.2h4.3c.44 0 .8-.36.8-.8V8.3h-3.7c-.88 0-1.6-.72-1.6-1.6V3.9h-2c-.44 0-.8.36-.8.8v1.1h-2.2V5.1c0-1.43 1.17-2.6 2.6-2.6Z"/>
+        <path fill="currentColor" d="M6.2 6.5h6.9L17 10.4v9.5c0 1.44-1.16 2.6-2.6 2.6H6.2A2.6 2.6 0 0 1 3.6 20V9.1c0-1.43 1.17-2.6 2.6-2.6Zm5.7 2.2v2.7c0 .88.72 1.6 1.6 1.6h2.3L11.9 8.7Z"/>
+      </svg>
+    </span>
     <span class="copy-icon-check" aria-hidden="true">✓</span>
   </button>
 </div>
-<div style="font-size:26px;color:#34c759;font-weight:700;margin-top:6px;"><span id="proVal">0</span> g protein</div>
+<div style="font-size:26px;line-height:1.12;color:#34c759;font-weight:700;margin-top:8px;"><span id="proVal">0</span> g protein</div>
 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;">
-  <div id="summaryLine" style="font-size:12px;color:#6e6e73;line-height:1.4;flex:1;"></div>
+  <div id="summaryLine" style="font-size:12px;color:#6e6e73;line-height:1.45;letter-spacing:0.01em;flex:1;"></div>
   <button id="detailToggleBtn" class="result-detail-btn" type="button" aria-label="詳細 Details" title="詳細 Details" aria-expanded="false" onclick="toggleResultDetails()">
     <span class="result-detail-icon">⌄</span>
   </button>
 </div>
 <div id="breakdownWrap" style="display:none;">
-  <div id="breakdownLine" style="margin-top:10px;font-size:13px;color:#8e8e93;line-height:1.5;"></div>
+  <div id="breakdownLine" style="margin-top:10px;font-size:13px;color:#8e8e93;line-height:1.56;letter-spacing:0.01em;"></div>
 </div>`
     resultMode = "stats"
     resultDetailsExpanded = false
@@ -1769,7 +1668,6 @@ function copyResultSummary(){
     copyShareResetTimer = setTimeout(()=>{
       btn.classList.remove("copied")
     }, 1200)
-    showCopyToast("已複製")
   }
 
   if(navigator.clipboard && window.isSecureContext){
@@ -1921,12 +1819,7 @@ lastMainForFeedback = main
 
 init()
 bindResultCardTap()
-attachSwipeToReveal(document.getElementById("mainPickerRow"), ()=>{
-  removeMain()
-}, ()=> !!document.getElementById("main").value)
-attachSwipeToReveal(document.getElementById("sauce1Row"), ()=>{
-  removeSauce1()
-}, ()=> !!document.getElementById("sauce1").value)
+updateSectionClearButtons()
 
 function updateResultVisibility(){
   const resultEl = document.getElementById("result")
@@ -2001,5 +1894,6 @@ function resetAll(){
   if(quickSearchModal) quickSearchModal.style.display = "none"
 
   updateAddonUI()
+  updateSectionClearButtons()
   calc()
 }

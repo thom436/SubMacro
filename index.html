@@ -35,61 +35,60 @@
 <!-- 主餐 -->
 <section class="option-section">
 <div class="section-head section-head-main">
-<div>
-  <div class="section-title">6吋潛艇堡</div>
-  <div class="section-subtitle">6" Sandwich</div>
+<div class="section-head-inline">
+  <span class="section-title">6吋潛艇堡</span>
+  <span class="section-subtitle section-subtitle-inline">6" Sandwich</span>
 </div>
-  <div class="section-toggle-wrap">
-    <span class="double-meat-label">雙份肉 Double meat</span>
-    <input type="checkbox" id="double" onchange="calc()"
-      onclick="event.stopPropagation()"
-      ontouchstart="event.stopPropagation()">
-  </div>
+<button type="button" id="mainClearBtn" class="section-clear-btn" onclick="clearMainSection()" style="visibility:hidden;">Clear</button>
 </div>
-<div id="mainPickerRow" class="picker-row-with-minus" style="margin-top:12px;">
+<div id="mainPickerRow" style="margin-top:4px;">
   <div id="mainPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="openMainPicker()">
     +
   </div>
-  <button type="button" id="mainRemoveBtn" class="minus-btn" onclick="removeMain()" style="display:none;">
-    −
-  </button>
 </div>
 <select id="main" onchange="calc()" style="display:none;"></select>
+<div class="section-toggle-wrap section-toggle-under">
+  <span class="double-meat-label">雙份肉 Double meat</span>
+  <input type="checkbox" id="double" onchange="calc()"
+    onclick="event.stopPropagation()"
+    ontouchstart="event.stopPropagation()">
+</div>
 </section>
 
 <!-- 加料 -->
 <section class="option-section">
-<div class="section-head section-head-stack">
-  <span class="section-title">加料</span>
-  <span id="addonLabel" class="section-subtitle">Add-ons (0)</span>
+<div class="section-head section-head-main">
+  <div class="section-head-inline">
+    <span class="section-title">加料</span>
+    <span id="addonLabel" class="section-subtitle section-subtitle-inline">Add-ons (0)</span>
+  </div>
+  <button type="button" id="addonClearBtn" class="section-clear-btn" onclick="clearAddonSection()" style="visibility:hidden;">Clear</button>
 </div>
 <div id="addonList" style="min-height:10px;"></div>
-<div id="addonEmptyPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="openAddonPicker(addonActiveGroup)" style="margin-top:12px;">
+<div id="addonEmptyPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="openAddonPicker(addonActiveGroup)" style="margin-top:4px;">
   +
 </div>
-<div id="addonSwipeHint" class="swipe-hint" style="display:none;">左滑可刪除 Swipe to delete</div>
 </section>
 
 <!-- 醬料 -->
 <section class="option-section">
-<div class="section-head section-head-stack">
-  <span class="section-title">醬料</span>
-  <span class="section-subtitle">Sauce</span>
+<div class="section-head section-head-main">
+  <div class="section-head-inline">
+    <span class="section-title">醬料</span>
+    <span class="section-subtitle section-subtitle-inline">Sauce</span>
+  </div>
+  <button type="button" id="sauceClearBtn" class="section-clear-btn" onclick="clearSauceSection()" style="visibility:hidden;">Clear</button>
 </div>
-<div id="sauce1Row" class="picker-row-with-minus" style="margin-top:12px;">
+<div id="sauce1Row" style="margin-top:4px;">
   <div id="sauce1Picker" class="picker-field picker-field-fill picker-field--placeholder picker-field--plus" onclick="openSauce1Picker()">
     +
   </div>
-  <button type="button" id="sauce1RemoveBtn" class="minus-btn" onclick="removeSauce1()" style="display:none;">
-    −
-  </button>
 </div>
 <input type="hidden" id="sauce1" value="">
   <div id="sauce2EmptyPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="addSauce2()" style="margin-top:10px;display:none;">
     +
   </div>
   <div id="sauce2List" style="min-height:10px;margin-top:8px;"></div>
-  <div id="sauceSwipeHint" class="swipe-hint" style="display:none;">左滑可刪除 Swipe to delete</div>
 </section>
 
 <div id="disclaimerDetail" class="footer-detail footer-detail-static">
@@ -112,7 +111,7 @@
     <div id="addonCategoriesWrapper" style="flex:0 0 auto;background:#fff;padding-bottom:8px;">
       <div id="addonModalCategories" style="display:flex;gap:8px;overflow:auto;"></div>
     </div>
-    <input id="addonSearch" class="modal-search-input" type="text" placeholder="搜尋加料 Search add-ons" autocomplete="off" oninput="renderAddonItems(addonActiveGroup)">
+    <input id="addonSearch" class="modal-search-input" type="text" placeholder="Search" autocomplete="off" oninput="renderAddonItems(addonActiveGroup)">
     <div id="addonItems" style="flex:1;overflow:auto;"></div>
   </div>
 </div>
@@ -121,20 +120,19 @@
     <div id="mainCategoriesWrapper" style="flex:0 0 auto;background:#fff;padding-bottom:8px;">
       <div id="mainModalCategories" style="display:flex;gap:8px;overflow:auto;"></div>
     </div>
-    <input id="mainSearch" class="modal-search-input" type="text" placeholder="搜尋口味 Search flavor" autocomplete="off" oninput="renderMainItems(mainActiveGroup)">
+    <input id="mainSearch" class="modal-search-input" type="text" placeholder="Search" autocomplete="off" oninput="renderMainItems(mainActiveGroup)">
     <div id="mainItems" style="flex:1;overflow:auto;"></div>
   </div>
 </div>
 <div id="sauceModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;z-index:10000;">
   <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-top-left-radius:20px;border-top-right-radius:20px;padding:16px;height:70vh;display:flex;flex-direction:column;">
-    <div style="font-size:16px;font-weight:700;margin-bottom:8px;">選擇醬料</div>
+    <div class="modal-panel-title">選擇醬料</div>
     <div id="sauceItems" style="flex:1;overflow:auto;"></div>
   </div>
 </div>
 <div id="quickSearchModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;z-index:10000;">
   <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-top-left-radius:20px;border-top-right-radius:20px;padding:16px;height:70vh;display:flex;flex-direction:column;">
-    <div style="font-size:16px;font-weight:700;margin-bottom:8px;">快速搜尋 Quick search</div>
-    <input id="quickSearchInput" class="modal-search-input" type="text" placeholder="搜尋口味加料醬料 Search flavor add-ons sauce" autocomplete="off" oninput="renderQuickSearchItems()">
+    <input id="quickSearchInput" class="modal-search-input" type="text" placeholder="Search" autocomplete="off" oninput="renderQuickSearchItems()">
     <div id="quickSearchItems" style="flex:1;overflow:auto;"></div>
   </div>
 </div>

@@ -33,13 +33,13 @@
 </div>
 
 <!-- 主餐 -->
-<div class="card">
-<div style="display:flex;justify-content:space-between;align-items:center;">
+<section class="option-section">
+<div class="section-head section-head-main">
 <div>
-  <div>6吋潛艇堡</div>
-  <div style="color:#8e8e93;font-size:13px;font-weight:400;">6" Sandwich</div>
+  <div class="section-title">6吋潛艇堡</div>
+  <div class="section-subtitle">6" Sandwich</div>
 </div>
-  <div style="display:flex;align-items:center;gap:8px;">
+  <div class="section-toggle-wrap">
     <span class="double-meat-label">雙份肉 Double meat</span>
     <input type="checkbox" id="double" onchange="calc()"
       onclick="event.stopPropagation()"
@@ -55,27 +55,27 @@
   </button>
 </div>
 <select id="main" onchange="calc()" style="display:none;"></select>
-</div>
+</section>
 
 <!-- 加料 -->
-<div class="card">
-<label style="flex-direction:column;align-items:flex-start;">
-  <span>加料</span>
-  <span id="addonLabel" style="color:#8e8e93;font-size:13px;font-weight:400;">Add-ons (0)</span>
-</label>
+<section class="option-section">
+<div class="section-head section-head-stack">
+  <span class="section-title">加料</span>
+  <span id="addonLabel" class="section-subtitle">Add-ons (0)</span>
+</div>
 <div id="addonList" style="min-height:10px;"></div>
 <div id="addonEmptyPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="openAddonPicker(addonActiveGroup)" style="margin-top:12px;">
   +
 </div>
 <div id="addonSwipeHint" class="swipe-hint" style="display:none;">左滑可刪除 Swipe to delete</div>
-</div>
+</section>
 
 <!-- 醬料 -->
-<div class="card">
-<label style="flex-direction:column;align-items:flex-start;">
-  <span>醬料</span>
-  <span style="color:#8e8e93;font-size:13px;font-weight:400;">Sauce</span>
-</label>
+<section class="option-section">
+<div class="section-head section-head-stack">
+  <span class="section-title">醬料</span>
+  <span class="section-subtitle">Sauce</span>
+</div>
 <div id="sauce1Row" class="picker-row-with-minus" style="margin-top:12px;">
   <div id="sauce1Picker" class="picker-field picker-field-fill picker-field--placeholder picker-field--plus" onclick="openSauce1Picker()">
     +
@@ -90,7 +90,7 @@
   </div>
   <div id="sauce2List" style="min-height:10px;margin-top:8px;"></div>
   <div id="sauceSwipeHint" class="swipe-hint" style="display:none;">左滑可刪除 Swipe to delete</div>
-</div>
+</section>
 
 <div id="disclaimerDetail" class="footer-detail footer-detail-static">
   <p class="footer-line">*潛艇堡包含小麥麵包、21g 生菜、3片番茄、3片大黃瓜、3根青椒、7g 洋蔥、三角切片起司。</p>
@@ -102,9 +102,6 @@
   </p>
   <p class="footer-version">資料更新：2026-03-31</p>
 </div>
-
-<!-- spacer to prevent overlap -->
-<div style="height:220px;"></div>
 
 <!-- 結果 -->
 <div class="result" id="result"></div>

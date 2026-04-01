@@ -1679,7 +1679,10 @@ function showResultStats(summaryText, breakdownHtml){
     resultEl.innerHTML =
 `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
   <div style="font-size:20px;font-weight:600;">🔥 <span id="calVal">0.0</span> kcal</div>
-  <button id="copyShareBtn" class="result-copy-btn" type="button" aria-label="複製結果 Copy result" title="複製結果 Copy result" onclick="copyResultSummary()"><span class="copy-rounded-icon" aria-hidden="true"></span></button>
+  <button id="copyShareBtn" class="result-copy-btn" type="button" aria-label="複製結果 Copy result" title="複製結果 Copy result" onclick="copyResultSummary()">
+    <span class="copy-icon-stack" aria-hidden="true"><span class="copy-icon-fold"></span></span>
+    <span class="copy-icon-check" aria-hidden="true">✓</span>
+  </button>
 </div>
 <div style="font-size:26px;color:#34c759;font-weight:700;margin-top:6px;"><span id="proVal">0</span> g protein</div>
 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;">
@@ -1761,10 +1764,10 @@ function copyResultSummary(){
   const btn = document.getElementById("copyShareBtn")
   const setCopiedLabel = ()=>{
     if(!btn) return
-    btn.innerHTML = `<span class="copy-check-icon">✓</span>`
+    btn.classList.add("copied")
     if(copyShareResetTimer) clearTimeout(copyShareResetTimer)
     copyShareResetTimer = setTimeout(()=>{
-      btn.innerHTML = `<span class="copy-rounded-icon" aria-hidden="true"></span>`
+      btn.classList.remove("copied")
     }, 1200)
     showCopyToast("已複製")
   }

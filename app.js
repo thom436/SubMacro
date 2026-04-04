@@ -196,6 +196,11 @@ function formatProtein(value){
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
 }
 
+function getPer100KcalText(protein, cal){
+  if(!cal) return ""
+  return `${((protein / cal) * 100).toFixed(1)}g/100kcal`
+}
+
 function setBilingualModalTitle(el, zh, en){
   if(!el) return
   if(!en){
@@ -344,19 +349,61 @@ function markSwipeHintSeen(type){
   }
 }
 
+function isDesktopHoverMode(){
+  return window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches
+}
+
+function refreshSwipeValueFlags(){
+  document.querySelectorAll(".swipe-row").forEach(row=>{
+    let hasValue = false
+
+    if(row.id === "mainPickerRow"){
+      hasValue = !!document.getElementById("main")?.value
+    } else if(row.id === "sauce1Row"){
+      hasValue = !!document.getElementById("sauce1")?.value
+    } else if(row.classList.contains("addon-row")){
+      hasValue = !!row.querySelector('input[data-role="addon-value"]')?.value
+    } else if(row.classList.contains("sauce-row")){
+      hasValue = !!row.querySelector('input[data-role="sauce-value"]')?.value
+    }
+
+    row.classList.toggle("has-swipe-value", hasValue)
+  })
+}
+
+function updateSwipeHints(){
+  const addonHint = document.getElementById("addonSwipeHint")
+  const sauceHint = document.getElementById("sauceSwipeHint")
+
+  if(!addonHint && !sauceHint) return
+  if(isDesktopHoverMode()){
+    if(addonHint) addonHint.style.display = "none"
+    if(sauceHint) sauceHint.style.display = "none"
+    return
+  }
+
+  const hasAddonRows = document.querySelectorAll("#addonList .addon-row").length > 0
+  const hasSauceRows = !!document.getElementById("sauce1")?.value || !!document.querySelector('#sauce2List input[data-role="sauce-value"]')?.value
+
+  if(addonHint){
+    addonHint.style.display = (hasAddonRows && !hasSeenSwipeHint("addon")) ? "block" : "none"
+  }
+  if(sauceHint){
+    sauceHint.style.display = (hasSauceRows && !hasSeenSwipeHint("sauce")) ? "block" : "none"
+  }
+}
+
 function isPickerTapSuppressed(){
   return Date.now() < suppressPickerTapUntil
 }
 
-function runAfterTapSuppression(fn){
-  const waitMs = suppressPickerTapUntil - Date.now()
-  if(waitMs <= 0) return false
-  setTimeout(fn, waitMs + 24)
-  return true
-}
+document.addEventListener("touchstart", (e)=>{
+  if(e.target.closest(".swipe-row")) return
+  closeOtherSwipeRows()
+}, { passive: true })
 
 function openSauce1Picker(){
-  if(runAfterTapSuppression(()=> openSaucePicker("sauce1"))) return
+  if(isPickerTapSuppressed()) return
   openSaucePicker("sauce1")
 }
 
@@ -397,9 +444,15 @@ function closeSwipeRow(row){
   if(!row) return
   row.classList.remove("swiped")
   const picker = row.querySelector(".picker-field")
-  const minusBtn = row.querySelector(".minus-btn")
+  const actionBtn = row.querySelector('[data-role="swipe-action"]')
   if(picker) picker.style.transform = ""
-  if(minusBtn) minusBtn.style.opacity = ""
+  if(actionBtn){
+    actionBtn.style.opacity = ""
+    actionBtn.style.width = ""
+    actionBtn.style.removeProperty("--clearLabelOpacity")
+    actionBtn.style.transform = ""
+  }
+  refreshSwipeValueFlags()
 }
 
 function removeRowWithAnimation(row, onDone){
@@ -414,93 +467,192 @@ function removeRowWithAnimation(row, onDone){
   setTimeout(()=>{
     row.remove()
     if(onDone) onDone()
-  }, 220)
+  }, 360)
 }
 
 function closeOtherSwipeRows(exceptRow = null){
-  document.querySelectorAll(".picker-row-with-minus.swiped").forEach(row=>{
+  document.querySelectorAll(".swipe-row.swiped").forEach(row=>{
     if(row !== exceptRow) closeSwipeRow(row)
   })
 }
 
-function attachSwipeToReveal(row, onSwipeDelete, canSwipe){
+function attachSwipeToReveal(row, onSwipeAction, canSwipe){
   if(!row || row.dataset.swipeReady === "1") return
   row.dataset.swipeReady = "1"
 
   const picker = row.querySelector(".picker-field")
-  const minusBtn = row.querySelector(".minus-btn")
-  if(!picker || !minusBtn) return
+  const actionBtn = row.querySelector('[data-role="swipe-action"]')
+  if(!picker || !actionBtn) return
+  const hintType = row.dataset.swipeHintType || ""
 
   let startX = 0
   let startY = 0
   let currentX = 0
+  let lastTranslate = 0
   let isSwiping = false
-  const revealWidth = 52
+  let pointerDown = false
+  let revealWidth = 92
+  let maxDrag = 132
+  let deleteThreshold = 124
+  let minClearWidth = 56
+  let settleClearWidth = 84
+  let maxClearWidth = 84
+  let settleThreshold = 54
+  let rowWidth = 0
 
-  row.addEventListener("touchstart", (e)=>{
+  const setSwipeVisual = (translateX)=>{
+    const next = Math.max(-maxDrag, Math.min(0, translateX))
+    lastTranslate = next
+    picker.style.transform = `translateX(${next}px)`
+    const dragDistance = Math.abs(next)
+    const progressToReveal = revealWidth > 0 ? Math.min(1, dragDistance / revealWidth) : 0
+    const extraAfterReveal = Math.max(0, dragDistance - revealWidth)
+
+    let clearWidth = minClearWidth + ((settleClearWidth - minClearWidth) * progressToReveal)
+    if(extraAfterReveal > 0){
+      clearWidth = settleClearWidth + (extraAfterReveal * 1.08)
+    }
+    clearWidth = Math.max(0, Math.min(maxClearWidth, clearWidth))
+
+    const bgOpacity = dragDistance < 14 ? 0 : Math.min(1, (dragDistance - 14) / 22)
+    const labelOpacity = dragDistance < 36 ? 0 : Math.min(1, (dragDistance - 36) / 20)
+
+    actionBtn.style.opacity = String(bgOpacity)
+    actionBtn.style.width = `${clearWidth}px`
+    actionBtn.style.setProperty("--clearLabelOpacity", labelOpacity.toFixed(3))
+    actionBtn.style.transform = "translateX(0)"
+  }
+
+  const onStart = (clientX, clientY)=>{
     if(typeof canSwipe === "function" && !canSwipe()){
       closeSwipeRow(row)
-      return
+      return false
     }
-    startX = e.touches[0].clientX
-    startY = e.touches[0].clientY
+    const rect = picker.getBoundingClientRect()
+    const rowHeight = Math.max(48, Math.round(rect.height))
+    rowWidth = Math.max(220, Math.round(rect.width))
+    minClearWidth = Math.max(52, Math.round(rowHeight * 1.03))
+    settleClearWidth = Math.max(minClearWidth + 12, Math.round(rowHeight * 1.48))
+    maxClearWidth = Math.max(settleClearWidth + 24, Math.min(Math.round(rowWidth * 0.76), Math.round(rowHeight * 4.1)))
+    revealWidth = Math.max(settleClearWidth + 10, Math.round(rowHeight * 1.74))
+    maxDrag = Math.max(revealWidth + 42, Math.round(rowWidth + 44))
+    deleteThreshold = Math.min(maxDrag - 12, Math.max(revealWidth + 58, Math.round(rowWidth * 0.66)))
+    settleThreshold = Math.max(42, Math.round(revealWidth * 0.56))
+    actionBtn.style.height = `${rowHeight}px`
+
+    startX = clientX
+    startY = clientY
     currentX = startX
+    lastTranslate = row.classList.contains("swiped") ? -revealWidth : 0
     isSwiping = false
+    pointerDown = true
     closeOtherSwipeRows(row)
-  }, { passive: true })
+    return true
+  }
 
-  row.addEventListener("touchmove", (e)=>{
+  const onMove = (clientX, clientY)=>{
+    if(!pointerDown) return false
     if(typeof canSwipe === "function" && !canSwipe()){
       closeSwipeRow(row)
-      return
+      return false
     }
-    currentX = e.touches[0].clientX
-    const currentY = e.touches[0].clientY
+    currentX = clientX
+    const currentY = clientY
     const diffX = currentX - startX
     const diffY = currentY - startY
 
     if(!isSwiping){
       if(Math.abs(diffX) > 8 && Math.abs(diffX) > Math.abs(diffY)){
         isSwiping = true
+        row.classList.add("swipe-dragging")
+        document.body.classList.add("swipe-dragging")
       } else {
-        return
+        return false
       }
     }
 
-    e.preventDefault()
+    const baseOffset = row.classList.contains("swiped") ? -revealWidth : 0
+    const next = baseOffset + diffX
+    setSwipeVisual(next)
+    return true
+  }
 
-    let next = 0
-    if(row.classList.contains("swiped")){
-      next = Math.max(-revealWidth, Math.min(0, diffX - revealWidth))
-    } else {
-      next = Math.max(-revealWidth, Math.min(0, diffX))
-    }
+  const onEnd = ()=>{
+    if(!pointerDown) return
+    pointerDown = false
+    row.classList.remove("swipe-dragging")
+    document.body.classList.remove("swipe-dragging")
 
-    picker.style.transform = `translateX(${next}px)`
-    const progress = Math.abs(next) / revealWidth
-    minusBtn.style.opacity = String(Math.max(0.15, progress))
-  }, { passive: false })
-
-  row.addEventListener("touchend", ()=>{
     if(!isSwiping){
       return
     }
 
     suppressPickerTapUntil = Date.now() + 280
 
-    const diffX = currentX - startX
-    if(diffX < -56){
-      if(typeof onSwipeDelete === "function"){
-        onSwipeDelete()
+    const dragDistance = Math.abs(lastTranslate)
+
+    if(dragDistance >= deleteThreshold){
+      if(hintType){
+        markSwipeHintSeen(hintType)
+        updateSwipeHints()
+      }
+      if(typeof onSwipeAction === "function"){
+        onSwipeAction()
       }
       setTimeout(()=> closeSwipeRow(row), 0)
+      return
+    }
+
+    if(dragDistance >= settleThreshold){
+      if(hintType){
+        markSwipeHintSeen(hintType)
+        updateSwipeHints()
+      }
+      row.classList.add("swiped")
+      setSwipeVisual(-revealWidth)
     } else {
       closeSwipeRow(row)
     }
+  }
+
+  row.addEventListener("touchstart", (e)=>{
+    onStart(e.touches[0].clientX, e.touches[0].clientY)
+  }, { passive: true })
+
+  row.addEventListener("touchmove", (e)=>{
+    const moved = onMove(e.touches[0].clientX, e.touches[0].clientY)
+    if(moved) e.preventDefault()
+  }, { passive: false })
+
+  row.addEventListener("touchend", onEnd)
+  row.addEventListener("touchcancel", ()=>{
+    pointerDown = false
+    row.classList.remove("swipe-dragging")
+    document.body.classList.remove("swipe-dragging")
+    closeSwipeRow(row)
   })
 
-  row.addEventListener("touchcancel", ()=>{
-    closeSwipeRow(row)
+  row.addEventListener("mousedown", (e)=>{
+    if(e.button !== 0) return
+    if(e.target.closest('[data-role="swipe-action"]')) return
+    const ok = onStart(e.clientX, e.clientY)
+    if(ok) e.preventDefault()
+  })
+
+  window.addEventListener("mousemove", (e)=>{
+    const moved = onMove(e.clientX, e.clientY)
+    if(moved) e.preventDefault()
+  })
+
+  window.addEventListener("mouseup", ()=>{
+    onEnd()
+  })
+
+  actionBtn.addEventListener("click", (e)=>{
+    e.stopPropagation()
+    if(typeof onSwipeAction === "function"){
+      onSwipeAction()
+    }
   })
 }
 
@@ -529,6 +681,7 @@ function updateMainPickerLabel(){
 
   if(!value){
     picker.textContent = "+"
+    picker.classList.remove("picker-field--bilingual-break")
     picker.classList.add("picker-field--placeholder")
     picker.classList.add("picker-field--plus")
     picker.classList.remove("picker-field-with-minus")
@@ -550,12 +703,32 @@ function clearMainSection(){
   mainSelect.value = ""
   document.getElementById("double").checked = false
   updateMainPickerLabel()
+  refreshSwipeValueFlags()
   animatePickerAppear(document.getElementById("mainPicker"))
   calc()
 }
 
+function ensureMainSwipeAction(){
+  const row = document.getElementById("mainPickerRow")
+  if(!row || row.dataset.clearReady === "1") return
+  row.dataset.clearReady = "1"
+  row.classList.add("swipe-row")
+  row.dataset.swipeHintType = "main"
+
+  const actionBtn = document.createElement("button")
+  actionBtn.type = "button"
+  actionBtn.dataset.role = "swipe-action"
+  actionBtn.className = "swipe-clear-btn"
+  actionBtn.textContent = "Clear"
+  row.appendChild(actionBtn)
+
+  attachSwipeToReveal(row, ()=>{
+    clearMainSection()
+  }, ()=> !!document.getElementById("main")?.value)
+}
+
 function openMainPicker(defaultGroup = ""){
-  if(runAfterTapSuppression(()=> openMainPicker(defaultGroup))) return
+  if(isPickerTapSuppressed()) return
   const modal = document.getElementById("mainModal")
   const catEl = document.getElementById("mainModalCategories")
   const itemsEl = document.getElementById("mainItems")
@@ -854,9 +1027,15 @@ function renderAddonItems(group){
     setBilingualModalTitle(textWrap, name, en)
     textWrap.style.paddingRight = "10px"
 
-    const rightWrap = createModalMetaWrap(`${data.addon[name].cal} kcal`, {
-      showCheck: selected.has(name) || (!!editingCurrentValue && name === editingCurrentValue)
-    })
+    const efficiency = getPer100KcalText(data.addon[name].protein, data.addon[name].cal)
+    const rightWrap = createModalMetaWrap(
+      `${data.addon[name].cal} kcal<br><span class="item-efficiency">${efficiency}</span>`,
+      {
+        showCheck: selected.has(name) || (!!editingCurrentValue && name === editingCurrentValue),
+        html: true,
+        hasEfficiency: true
+      }
+    )
 
     div.appendChild(textWrap)
     const alreadySelected = selected.has(name)
@@ -1051,9 +1230,15 @@ function renderQuickSearchItems(){
     setBilingualModalTitle(left, name, en)
     left.style.paddingRight = "10px"
 
-    const rightWrap = createModalMetaWrap(`${data.addon[name].cal} kcal`, {
-      showCheck: selectedAddon.has(name)
-    })
+    const efficiency = getPer100KcalText(data.addon[name].protein, data.addon[name].cal)
+    const rightWrap = createModalMetaWrap(
+      `${data.addon[name].cal} kcal<br><span class="item-efficiency">${efficiency}</span>`,
+      {
+        showCheck: selectedAddon.has(name),
+        html: true,
+        hasEfficiency: true
+      }
+    )
 
     if(selectedAddon.has(name)){
       row.style.opacity = "0.45"
@@ -1182,6 +1367,10 @@ updateSaucePickerLabel("sauce1")
 updateSauce2Visibility()
 
 updateAddonUI()
+ensureMainSwipeAction()
+ensureSauce1SwipeAction()
+refreshSwipeValueFlags()
+updateSwipeHints()
 
 calc()
 }
@@ -1189,6 +1378,8 @@ calc()
 function createAddonSelect(removable = true){
   const wrapper = document.createElement("div")
   wrapper.className = "addon-row"
+  wrapper.classList.add("swipe-row")
+  wrapper.dataset.swipeHintType = "addon"
 
   wrapper.style.display = "block"
   wrapper.style.marginTop = "8px"
@@ -1198,7 +1389,9 @@ function createAddonSelect(removable = true){
   const display = document.createElement("div")
   display.className = "picker-field picker-field-fill picker-field--placeholder"
   display.textContent = "尚未選擇加料"
-  display.onclick = ()=>{
+  display.onclick = (e)=>{
+    e.stopPropagation()
+    if(isPickerTapSuppressed()) return
     openAddonPicker(addonActiveGroup, wrapper)
   }
 
@@ -1212,6 +1405,21 @@ function createAddonSelect(removable = true){
 
   if(removable){
     wrapper.dataset.removable = "1"
+    const actionBtn = document.createElement("button")
+    actionBtn.type = "button"
+    actionBtn.dataset.role = "swipe-action"
+    actionBtn.className = "swipe-clear-btn"
+    actionBtn.textContent = "Clear"
+    wrapper.appendChild(actionBtn)
+    attachSwipeToReveal(wrapper, ()=>{
+      removeRowWithAnimation(wrapper, ()=>{
+        updateAddonUI()
+        calc()
+      })
+    }, ()=>{
+      const hidden = wrapper.querySelector('input[data-role="addon-value"]')
+      return !!(hidden && hidden.value)
+    })
   }
 
   return wrapper
@@ -1230,6 +1438,7 @@ function setAddonValue(wrapper, value){
   const en = addonNameMap[value] || ""
   setBilingualPickerText(display, value, en)
   display.classList.remove("picker-field--placeholder")
+  refreshSwipeValueFlags()
 }
 
 function addAddon(defaultValue = ""){
@@ -1277,6 +1486,8 @@ function updateAddonUI(){
   }
   updateAddonRowSpacing()
   updateSectionClearButtons()
+  refreshSwipeValueFlags()
+  updateSwipeHints()
 }
 
 function getSauceDisplayText(value){
@@ -1296,6 +1507,8 @@ function updateSauce2Visibility(){
     list.innerHTML = ""
     emptyPicker.style.display = "none"
     updateSectionClearButtons()
+    refreshSwipeValueFlags()
+    updateSwipeHints()
     return
   }
 
@@ -1306,6 +1519,8 @@ function updateSauce2Visibility(){
     animatePickerAppear(emptyPicker)
   }
   updateSectionClearButtons()
+  refreshSwipeValueFlags()
+  updateSwipeHints()
 }
 
 function updateSaucePickerLabel(target = "sauce1"){
@@ -1315,6 +1530,7 @@ function updateSaucePickerLabel(target = "sauce1"){
     if(!picker) return
     if(!value){
       picker.textContent = getSauceDisplayText(value)
+      picker.classList.remove("picker-field--bilingual-break")
       picker.classList.add("picker-field--placeholder")
       picker.classList.add("picker-field--plus")
       picker.classList.remove("picker-field-with-minus")
@@ -1326,6 +1542,7 @@ function updateSaucePickerLabel(target = "sauce1"){
       picker.classList.remove("picker-field-with-minus")
     }
     updateSauce2Visibility()
+    refreshSwipeValueFlags()
     return
   }
 
@@ -1337,6 +1554,7 @@ function updateSaucePickerLabel(target = "sauce1"){
   if(display){
     if(!value){
       display.textContent = getSauceDisplayText(value)
+      display.classList.remove("picker-field--bilingual-break")
       display.classList.add("picker-field--placeholder")
       display.classList.add("picker-field--plus")
       display.classList.remove("picker-field-with-minus")
@@ -1349,6 +1567,8 @@ function updateSaucePickerLabel(target = "sauce1"){
     }
   }
   updateSectionClearButtons()
+  refreshSwipeValueFlags()
+  updateSwipeHints()
 }
 
 
@@ -1474,7 +1694,10 @@ function renderSauceItems(){
 function createSauceSelect(){
   const wrapper = document.createElement("div")
   wrapper.className = "sauce-row"
+  wrapper.classList.add("swipe-row")
+  wrapper.dataset.swipeHintType = "sauce"
   wrapper.onclick = ()=>{
+    if(isPickerTapSuppressed()) return
     openSaucePicker("sauce2")
   }
 
@@ -1499,6 +1722,18 @@ function createSauceSelect(){
 
   wrapper.appendChild(display)
   wrapper.appendChild(hiddenValue)
+  const actionBtn = document.createElement("button")
+  actionBtn.type = "button"
+  actionBtn.dataset.role = "swipe-action"
+  actionBtn.className = "swipe-clear-btn"
+  actionBtn.textContent = "Clear"
+  wrapper.appendChild(actionBtn)
+  attachSwipeToReveal(wrapper, ()=>{
+    removeRowWithAnimation(wrapper, ()=>{
+      updateSauce2Visibility()
+      calc()
+    })
+  }, ()=> !!hiddenValue.value)
 
   return wrapper
 }
@@ -1522,7 +1757,7 @@ function addSauce2Internal(){
 }
 
 function addSauce2(){
-  if(runAfterTapSuppression(()=> addSauce2Internal())) return
+  if(isPickerTapSuppressed()) return
   addSauce2Internal()
 }
 
@@ -1534,14 +1769,55 @@ function clearSauceSection(){
   sauce1.value = ""
   if(sauce2List) sauce2List.innerHTML = ""
   updateSaucePickerLabel("sauce1")
+  refreshSwipeValueFlags()
+  updateSwipeHints()
   animatePickerAppear(document.getElementById("sauce1Picker"))
   calc()
+}
+
+function clearSauce1Single(){
+  const sauce1 = document.getElementById("sauce1")
+  if(!sauce1) return
+  const sauce2ValueInput = document.querySelector('#sauce2List input[data-role="sauce-value"]')
+  const sauce2Value = sauce2ValueInput ? sauce2ValueInput.value : ""
+  const sauce2List = document.getElementById("sauce2List")
+  if(sauce2Value){
+    sauce1.value = sauce2Value
+  } else {
+    sauce1.value = ""
+  }
+  if(sauce2List) sauce2List.innerHTML = ""
+  updateSaucePickerLabel("sauce1")
+  refreshSwipeValueFlags()
+  updateSwipeHints()
+  calc()
+}
+
+function ensureSauce1SwipeAction(){
+  const row = document.getElementById("sauce1Row")
+  if(!row || row.dataset.clearReady === "1") return
+  row.dataset.clearReady = "1"
+  row.classList.add("swipe-row")
+  row.dataset.swipeHintType = "sauce"
+
+  const actionBtn = document.createElement("button")
+  actionBtn.type = "button"
+  actionBtn.dataset.role = "swipe-action"
+  actionBtn.className = "swipe-clear-btn"
+  actionBtn.textContent = "Clear"
+  row.appendChild(actionBtn)
+
+  attachSwipeToReveal(row, ()=>{
+    clearSauce1Single()
+  }, ()=> !!document.getElementById("sauce1").value)
 }
 
 function clearAddonSection(){
   const addonList = document.getElementById("addonList")
   if(addonList) addonList.innerHTML = ""
   updateAddonUI()
+  refreshSwipeValueFlags()
+  updateSwipeHints()
   calc()
 }
 
@@ -1557,6 +1833,7 @@ function updateSectionClearButtons(){
   if(mainClearBtn) mainClearBtn.style.visibility = hasMain ? "visible" : "hidden"
   if(addonClearBtn) addonClearBtn.style.visibility = hasAddon ? "visible" : "hidden"
   if(sauceClearBtn) sauceClearBtn.style.visibility = (hasSauce1 || hasSauce2) ? "visible" : "hidden"
+  refreshSwipeValueFlags()
 }
 
 let lastCal = 0;
@@ -1840,6 +2117,7 @@ lastMainForFeedback = main
 init()
 bindResultCardTap()
 updateSectionClearButtons()
+ensureSauce1SwipeAction()
 
 function updateResultVisibility(){
   const resultEl = document.getElementById("result")

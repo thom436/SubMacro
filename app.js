@@ -536,7 +536,7 @@ function attachSwipeToReveal(row, onSwipeAction, canSwipe){
     maxClearWidth = Math.max(settleClearWidth + 24, Math.min(Math.round(rowWidth * 0.76), Math.round(rowHeight * 4.1)))
     revealWidth = Math.max(settleClearWidth + 10, Math.round(rowHeight * 1.74))
     maxDrag = Math.max(revealWidth + 42, Math.round(rowWidth + 44))
-    deleteThreshold = Math.min(maxDrag - 12, Math.max(revealWidth + 58, Math.round(rowWidth * 0.66)))
+    deleteThreshold = Math.min(maxDrag - 10, Math.max(revealWidth + 42, Math.round(rowWidth * 0.56)))
     settleThreshold = Math.max(42, Math.round(revealWidth * 0.56))
     actionBtn.style.height = `${rowHeight}px`
 
@@ -653,6 +653,7 @@ function attachSwipeToReveal(row, onSwipeAction, canSwipe){
     if(typeof onSwipeAction === "function"){
       onSwipeAction()
     }
+    closeSwipeRow(row)
   })
 }
 

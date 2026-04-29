@@ -1362,6 +1362,13 @@ Object.keys(data.main).forEach(name=>{
 main.value = ""
 updateMainPickerLabel()
 
+const doubleToggle = document.getElementById("double")
+if(doubleToggle && doubleToggle.dataset.bound !== "1"){
+  doubleToggle.dataset.bound = "1"
+  doubleToggle.addEventListener("change", ()=>{
+    calc()
+  })
+}
 
 document.getElementById("sauce1").value = ""
 updateSaucePickerLabel("sauce1")

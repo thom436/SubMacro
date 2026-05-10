@@ -2,15 +2,16 @@
 <html>
 <head>
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Subway calculator</title>
 
 <link rel="icon" href="favicon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Subway Calc">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1b1f26">
 <link rel="apple-touch-icon" href="favicon.png">
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
@@ -19,20 +20,26 @@
 
 <body>
 
-<h2 class="logo">
-  <span class="sub">SUB</span><span class="way">WAY</span>
-  <span class="title-sub"> 計算機</span>
-</h2>
-<div class="top-actions">
-  <button type="button" class="icon-symbol-btn" aria-label="搜尋 Search" title="搜尋 Search" onclick="openQuickSearch()">
-    ⌕
-  </button>
-</div>
-<div class="reset-row">
-  <button type="button" class="reset-btn" aria-label="重設 Reset" title="重設 Reset" onclick="resetAll()">
-    ↻
-  </button>
-</div>
+<main class="app-shell">
+<header class="app-header">
+  <div>
+    <h1 class="logo">
+      <span class="sub">SUB</span><span class="way">WAY</span>
+      <span class="title-sub">計算機</span>
+    </h1>
+    <p class="app-tagline">快速估算 6 吋潛艇堡熱量與蛋白質</p>
+  </div>
+  <div class="top-actions">
+    <button type="button" class="icon-symbol-btn" aria-label="搜尋 Search" title="搜尋 Search" onclick="openQuickSearch()">
+      ⌕
+    </button>
+    <button type="button" class="reset-btn" aria-label="重設 Reset" title="重設 Reset" onclick="resetAll()">
+      ↻
+    </button>
+  </div>
+</header>
+
+<div class="builder-panel">
 
 <!-- 主餐 -->
 <section class="option-section option-section-main">
@@ -45,12 +52,12 @@
 </div>
 <div id="mainPickerRow" class="section-picker-top">
   <div id="mainPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="openMainPicker()">
-    +
+    選擇主餐
   </div>
 </div>
 <select id="main" onchange="calc()" style="display:none;"></select>
 <div class="section-toggle-wrap section-toggle-under">
-  <span class="double-meat-label">雙份肉 Double meat</span>
+  <span class="double-meat-label">雙份肉 <span>Double meat</span></span>
   <input type="checkbox" id="double" onchange="calc()"
     onclick="event.stopPropagation()"
     ontouchstart="event.stopPropagation()">
@@ -68,7 +75,7 @@
 </div>
 <div id="addonList" style="min-height:0;"></div>
 <div id="addonEmptyPicker" class="picker-field picker-field--placeholder picker-field--plus section-picker-top" onclick="openAddonPicker(addonActiveGroup)">
-  +
+  加入加料
 </div>
 <div id="addonSwipeHint" class="swipe-hint" style="display:none;">左滑刪除 Swipe to delete</div>
 </section>
@@ -84,12 +91,12 @@
 </div>
 <div id="sauce1Row" class="section-picker-top">
   <div id="sauce1Picker" class="picker-field picker-field-fill picker-field--placeholder picker-field--plus" onclick="openSauce1Picker()">
-    +
+    選擇醬料
   </div>
 </div>
 <input type="hidden" id="sauce1" value="">
   <div id="sauce2EmptyPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="addSauce2()" style="margin-top:10px;display:none;">
-    +
+    加第二種醬
   </div>
   <div id="sauce2List" style="min-height:10px;margin-top:8px;"></div>
   <div id="sauceSwipeHint" class="swipe-hint" style="display:none;">左滑刪除 Swipe to delete</div>
@@ -105,39 +112,48 @@
   </p>
   <p class="footer-version">資料更新：2026-03-31</p>
 </div>
+</div>
 
 <!-- 結果 -->
 <div class="result" id="result"></div>
+</main>
 
 <script src="app.js?v=20260331-2"></script>
-<div id="addonModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;z-index:10000;">
-  <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-top-left-radius:20px;border-top-right-radius:20px;padding:16px;height:70vh;display:flex;flex-direction:column;">
-    <div id="addonCategoriesWrapper" style="flex:0 0 auto;background:#fff;padding-bottom:8px;">
-      <div id="addonModalCategories" style="display:flex;gap:8px;overflow:auto;"></div>
+<div id="addonModal" class="sheet-modal">
+  <div class="sheet-panel">
+    <div class="sheet-grabber" aria-hidden="true"></div>
+    <div class="modal-panel-title">選擇加料</div>
+    <div id="addonCategoriesWrapper" class="modal-categories-wrapper">
+      <div id="addonModalCategories" class="modal-categories"></div>
     </div>
-    <input id="addonSearch" class="modal-search-input" type="text" placeholder="Search" autocomplete="off" oninput="renderAddonItems(addonActiveGroup)">
-    <div id="addonItems" style="flex:1;overflow:auto;"></div>
+    <input id="addonSearch" class="modal-search-input" type="text" placeholder="搜尋加料 Search add-ons" autocomplete="off" oninput="renderAddonItems(addonActiveGroup)">
+    <div id="addonItems" class="modal-items"></div>
   </div>
 </div>
-<div id="mainModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;z-index:10000;">
-  <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-top-left-radius:20px;border-top-right-radius:20px;padding:16px;height:70vh;display:flex;flex-direction:column;">
-    <div id="mainCategoriesWrapper" style="flex:0 0 auto;background:#fff;padding-bottom:8px;">
-      <div id="mainModalCategories" style="display:flex;gap:8px;overflow:auto;"></div>
+<div id="mainModal" class="sheet-modal">
+  <div class="sheet-panel">
+    <div class="sheet-grabber" aria-hidden="true"></div>
+    <div class="modal-panel-title">選擇主餐</div>
+    <div id="mainCategoriesWrapper" class="modal-categories-wrapper">
+      <div id="mainModalCategories" class="modal-categories"></div>
     </div>
-    <input id="mainSearch" class="modal-search-input" type="text" placeholder="Search" autocomplete="off" oninput="renderMainItems(mainActiveGroup)">
-    <div id="mainItems" style="flex:1;overflow:auto;"></div>
+    <input id="mainSearch" class="modal-search-input" type="text" placeholder="搜尋主餐 Search sandwiches" autocomplete="off" oninput="renderMainItems(mainActiveGroup)">
+    <div id="mainItems" class="modal-items"></div>
   </div>
 </div>
-<div id="sauceModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;z-index:10000;">
-  <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-top-left-radius:20px;border-top-right-radius:20px;padding:16px;height:70vh;display:flex;flex-direction:column;">
+<div id="sauceModal" class="sheet-modal">
+  <div class="sheet-panel">
+    <div class="sheet-grabber" aria-hidden="true"></div>
     <div class="modal-panel-title">選擇醬料</div>
-    <div id="sauceItems" style="flex:1;overflow:auto;"></div>
+    <div id="sauceItems" class="modal-items"></div>
   </div>
 </div>
-<div id="quickSearchModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;z-index:10000;">
-  <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-top-left-radius:20px;border-top-right-radius:20px;padding:16px;height:70vh;display:flex;flex-direction:column;">
-    <input id="quickSearchInput" class="modal-search-input" type="text" placeholder="Search" autocomplete="off" oninput="renderQuickSearchItems()">
-    <div id="quickSearchItems" style="flex:1;overflow:auto;"></div>
+<div id="quickSearchModal" class="sheet-modal">
+  <div class="sheet-panel">
+    <div class="sheet-grabber" aria-hidden="true"></div>
+    <div class="modal-panel-title">快速搜尋</div>
+    <input id="quickSearchInput" class="modal-search-input" type="text" placeholder="搜尋主餐、加料、醬料" autocomplete="off" oninput="renderQuickSearchItems()">
+    <div id="quickSearchItems" class="modal-items"></div>
   </div>
 </div>
 </body>

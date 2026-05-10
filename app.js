@@ -681,7 +681,7 @@ function updateMainPickerLabel(){
   if(!picker) return
 
   if(!value){
-    picker.textContent = "+"
+    picker.textContent = "選擇主餐"
     picker.classList.remove("picker-field--bilingual-break")
     picker.classList.add("picker-field--placeholder")
     picker.classList.add("picker-field--plus")
@@ -1439,7 +1439,7 @@ function setAddonValue(wrapper, value){
   if(!hidden || !display) return
   hidden.value = value || ""
   if(!value){
-    display.textContent = "尚未選擇加料"
+    display.textContent = "選擇加料"
     display.classList.add("picker-field--placeholder")
     return
   }
@@ -1488,7 +1488,7 @@ function updateAddonUI(){
   if(emptyPicker){
     emptyPicker.style.display = "flex"
     emptyPicker.style.marginTop = count === 0 ? "6px" : "8px"
-    emptyPicker.textContent = "+"
+    emptyPicker.textContent = count === 0 ? "加入加料" : "再加一項"
     emptyPicker.classList.toggle("picker-field--placeholder", count === 0)
     emptyPicker.classList.add("picker-field--plus")
   }
@@ -1499,7 +1499,7 @@ function updateAddonUI(){
 }
 
 function getSauceDisplayText(value){
-  if(!value) return "+"
+  if(!value) return "選擇醬料"
   const en = sauceNameMap[value] || ""
   return en ? `${value} ${en}` : value
 }
@@ -1561,7 +1561,7 @@ function updateSaucePickerLabel(target = "sauce1"){
   const value = hidden ? hidden.value : ""
   if(display){
     if(!value){
-      display.textContent = getSauceDisplayText(value)
+      display.textContent = "選擇第二種醬"
       display.classList.remove("picker-field--bilingual-break")
       display.classList.add("picker-field--placeholder")
       display.classList.add("picker-field--plus")
@@ -1716,7 +1716,7 @@ function createSauceSelect(){
   const display = document.createElement("div")
   display.dataset.role = "sauce-display"
   display.className = "picker-field picker-field-fill picker-field--placeholder picker-field--plus"
-  display.textContent = "+"
+  display.textContent = "選擇第二種醬"
   display.onclick = (e)=>{
     e.stopPropagation()
     if(isPickerTapSuppressed()) return

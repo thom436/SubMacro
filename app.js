@@ -2156,19 +2156,19 @@ function attachSwipeToDismiss(panel, closeFn) {
     return true
   }
 
-  panel.addEventListener("touchstart", (e) => {
-    if (!canStart(e.target)) return
-    startY = e.touches[0].clientY
+  const onStart = (clientY, target) => {
+    if (!canStart(target)) return
+    startY = clientY
     startTime = Date.now()
-    currentY = startY
+    currentY = clientY
     isDragging = false
     isActive = true
     panel.style.transition = "none"
-  }, { passive: true })
+  }
 
-  panel.addEventListener("touchmove", (e) => {
+  const onMove = (clientY, preventDefault) => {
     if (!isActive) return
-    currentY = e.touches[0].clientY
+    currentY = clientY
     const dy = currentY - startY
     if (!isDragging) {
       if (dy > 8) isDragging = true
@@ -2177,8 +2177,8 @@ function attachSwipeToDismiss(panel, closeFn) {
     }
     const translate = Math.max(0, dy)
     panel.style.transform = `translateY(${translate}px)`
-    if (translate > 0) e.preventDefault()
-  }, { passive: false })
+    if (translate > 0 && preventDefault) preventDefault()
+  }
 
   const onEnd = () => {
     if (!isActive) return
@@ -2203,11 +2203,33 @@ function attachSwipeToDismiss(panel, closeFn) {
     }
   }
 
-  panel.addEventListener("touchend", onEnd)
-  panel.addEventListener("touchcancel", () => {
+  const onCancel = () => {
     isActive = false
     panel.style.transform = ""
     panel.style.transition = ""
+  }
+
+  // Touch events (mobile)
+  panel.addEventListener("touchstart", (e) => {
+    onStart(e.touches[0].clientY, e.target)
+  }, { passive: true })
+  panel.addEventListener("touchmove", (e) => {
+    onMove(e.touches[0].clientY, () => e.preventDefault())
+  }, { passive: false })
+  panel.addEventListener("touchend", onEnd)
+  panel.addEventListener("touchcancel", onCancel)
+
+  // Mouse events (desktop)
+  panel.addEventListener("mousedown", (e) => {
+    onStart(e.clientY, e.target)
+    const onMouseMove = (e) => onMove(e.clientY, null)
+    const onMouseUp = () => {
+      onEnd()
+      document.removeEventListener("mousemove", onMouseMove)
+      document.removeEventListener("mouseup", onMouseUp)
+    }
+    document.addEventListener("mousemove", onMouseMove)
+    document.addEventListener("mouseup", onMouseUp)
   })
 }
 

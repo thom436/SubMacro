@@ -1737,17 +1737,23 @@ body {
   -webkit-backdrop-filter: blur(40px) saturate(160%);
 }
 
+.sheet-grabber-wrap {
+  flex-shrink: 0;
+  padding: 14px 0 12px;
+  display: flex;
+  justify-content: center;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+.sheet-grabber-wrap:active {
+  cursor: grabbing;
+}
 .sheet-grabber {
   width: 36px;
   height: 5px;
   border-radius: 999px;
   background: rgba(100,106,120,0.3);
-  margin: 4px auto 14px;
-  cursor: grab;
-  flex-shrink: 0;
-}
-.sheet-grabber:active {
-  cursor: grabbing;
+  pointer-events: none;
 }
 
 .modal-categories-wrapper {

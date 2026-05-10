@@ -1795,20 +1795,20 @@ body {
   }
 
   .app-shell {
+    display: block;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .app-shell.has-result {
     display: grid;
-    grid-template-columns: minmax(0, 680px);
-    justify-content: center;
+    grid-template-columns: 1fr minmax(300px, 340px);
     gap: 22px;
     align-items: start;
     max-width: 1080px;
   }
 
-  .app-shell.has-result {
-    grid-template-columns: 1fr minmax(300px, 340px);
-    justify-content: initial;
-  }
-
-  .app-header {
+  .app-shell.has-result .app-header {
     grid-column: 1 / -1;
   }
 

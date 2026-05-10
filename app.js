@@ -2122,10 +2122,101 @@ lastMainForFeedback = main
   updateResultVisibility()
 }
 
+function attachSwipeToDismiss(panel, closeFn) {
+  if (!panel || panel.dataset.swipeDismissReady === "1") return
+  panel.dataset.swipeDismissReady = "1"
+
+  const grabber = panel.querySelector(".sheet-grabber")
+  const itemsEl = panel.querySelector(".modal-items")
+
+  let startY = 0
+  let currentY = 0
+  let startTime = 0
+  let isDragging = false
+  let isActive = false
+
+  const DISMISS_THRESHOLD = 90
+  const FAST_VELOCITY = 0.45 // px/ms
+
+  const canStart = (target) => {
+    if (grabber && grabber.contains(target)) return true
+    if (itemsEl && itemsEl.contains(target)) return itemsEl.scrollTop === 0
+    return true
+  }
+
+  panel.addEventListener("touchstart", (e) => {
+    if (!canStart(e.target)) return
+    startY = e.touches[0].clientY
+    startTime = Date.now()
+    currentY = startY
+    isDragging = false
+    isActive = true
+    panel.style.transition = "none"
+  }, { passive: true })
+
+  panel.addEventListener("touchmove", (e) => {
+    if (!isActive) return
+    currentY = e.touches[0].clientY
+    const dy = currentY - startY
+    if (!isDragging) {
+      if (dy > 8) isDragging = true
+      else if (dy < -4) { isActive = false; return }
+      else return
+    }
+    const translate = Math.max(0, dy)
+    panel.style.transform = `translateY(${translate}px)`
+    if (translate > 0) e.preventDefault()
+  }, { passive: false })
+
+  const onEnd = () => {
+    if (!isActive) return
+    isActive = false
+    if (!isDragging) {
+      panel.style.transform = ""
+      return
+    }
+    const dy = currentY - startY
+    const velocity = dy / Math.max(1, Date.now() - startTime)
+    panel.style.transition = "transform 0.26s cubic-bezier(.22,.61,.36,1)"
+    if (dy > DISMISS_THRESHOLD || velocity > FAST_VELOCITY) {
+      panel.style.transform = "translateY(105%)"
+      setTimeout(() => {
+        panel.style.transform = ""
+        panel.style.transition = ""
+        closeFn()
+      }, 260)
+    } else {
+      panel.style.transform = ""
+      setTimeout(() => { panel.style.transition = "" }, 260)
+    }
+  }
+
+  panel.addEventListener("touchend", onEnd)
+  panel.addEventListener("touchcancel", () => {
+    isActive = false
+    panel.style.transform = ""
+    panel.style.transition = ""
+  })
+}
+
+function initSwipeToDismiss() {
+  const configs = [
+    { panelId: "mainModal",       closeFn: () => document.getElementById("mainModal").style.display = "none" },
+    { panelId: "addonModal",      closeFn: () => document.getElementById("addonModal").style.display = "none" },
+    { panelId: "sauceModal",      closeFn: () => document.getElementById("sauceModal").style.display = "none" },
+    { panelId: "quickSearchModal",closeFn: () => closeQuickSearch() },
+  ]
+  configs.forEach(({ panelId, closeFn }) => {
+    const panel = document.querySelector(`#${panelId} .sheet-panel`)
+    attachSwipeToDismiss(panel, closeFn)
+  })
+}
+
 init()
 bindResultCardTap()
 updateSectionClearButtons()
 ensureSauce1SwipeAction()
+initSwipeToDismiss()
 
 function updateResultVisibility(){
   const resultEl = document.getElementById("result")

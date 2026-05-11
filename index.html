@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Subway calculator</title>
+<meta name="description" content="快速估算 6 吋 Subway 潛艇堡熱量與蛋白質的非官方計算器。">
 
 <link rel="icon" href="favicon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,7 +16,7 @@
 <link rel="apple-touch-icon" href="favicon.png">
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260511r">
+<link rel="stylesheet" href="styles.css?v=20260512a">
 </head>
 
 <body>
@@ -51,7 +52,7 @@
 <button type="button" id="mainClearBtn" class="section-clear-btn" onclick="clearMainSection()" style="visibility:hidden;">Clear</button>
 </div>
 <div id="mainPickerRow" class="section-picker-top">
-  <div id="mainPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="openMainPicker()">
+  <div id="mainPicker" class="picker-field picker-field--placeholder picker-field--plus" role="button" tabindex="0" onclick="openMainPicker()">
     選擇主餐
   </div>
 </div>
@@ -74,7 +75,7 @@
   <button type="button" id="addonClearBtn" class="section-clear-btn" onclick="clearAddonSection()" style="visibility:hidden;">Clear</button>
 </div>
 <div id="addonList" style="min-height:0;"></div>
-<div id="addonEmptyPicker" class="picker-field picker-field--placeholder picker-field--plus section-picker-top" onclick="openAddonPicker(addonActiveGroup)">
+<div id="addonEmptyPicker" class="picker-field picker-field--placeholder picker-field--plus section-picker-top" role="button" tabindex="0" onclick="openAddonPicker(addonActiveGroup)">
   加入加料
 </div>
 <div id="addonSwipeHint" class="swipe-hint" style="display:none;">左滑刪除 Swipe to delete</div>
@@ -90,12 +91,12 @@
   <button type="button" id="sauceClearBtn" class="section-clear-btn" onclick="clearSauceSection()" style="visibility:hidden;">Clear</button>
 </div>
 <div id="sauce1Row" class="section-picker-top">
-  <div id="sauce1Picker" class="picker-field picker-field-fill picker-field--placeholder picker-field--plus" onclick="openSauce1Picker()">
+  <div id="sauce1Picker" class="picker-field picker-field-fill picker-field--placeholder picker-field--plus" role="button" tabindex="0" onclick="openSauce1Picker()">
     選擇醬料
   </div>
 </div>
 <input type="hidden" id="sauce1" value="">
-  <div id="sauce2EmptyPicker" class="picker-field picker-field--placeholder picker-field--plus" onclick="addSauce2()" style="margin-top:10px;display:none;">
+  <div id="sauce2EmptyPicker" class="picker-field picker-field--placeholder picker-field--plus" role="button" tabindex="0" onclick="addSauce2()" style="margin-top:10px;display:none;">
     加第二種醬
   </div>
   <div id="sauce2List" style="min-height:10px;margin-top:8px;"></div>
@@ -115,14 +116,13 @@
 </div>
 
 <!-- 結果 -->
-<div class="result" id="result"></div>
+<div class="result" id="result" aria-live="polite"></div>
 </main>
 
-<script src="app.js?v=20260511g"></script>
-<div id="addonModal" class="sheet-modal">
-  <div class="sheet-panel">
+<div id="addonModal" class="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="addonModalTitle">
+  <div class="sheet-panel" tabindex="-1">
     <div class="sheet-grabber-wrap" aria-hidden="true"><div class="sheet-grabber"></div></div>
-    <div class="modal-panel-title">選擇加料</div>
+    <div id="addonModalTitle" class="modal-panel-title">選擇加料</div>
     <div id="addonCategoriesWrapper" class="modal-categories-wrapper">
       <div id="addonModalCategories" class="modal-categories"></div>
     </div>
@@ -130,10 +130,10 @@
     <div id="addonItems" class="modal-items"></div>
   </div>
 </div>
-<div id="mainModal" class="sheet-modal">
-  <div class="sheet-panel">
+<div id="mainModal" class="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="mainModalTitle">
+  <div class="sheet-panel" tabindex="-1">
     <div class="sheet-grabber-wrap" aria-hidden="true"><div class="sheet-grabber"></div></div>
-    <div class="modal-panel-title">選擇主餐</div>
+    <div id="mainModalTitle" class="modal-panel-title">選擇主餐</div>
     <div id="mainCategoriesWrapper" class="modal-categories-wrapper">
       <div id="mainModalCategories" class="modal-categories"></div>
     </div>
@@ -141,20 +141,21 @@
     <div id="mainItems" class="modal-items"></div>
   </div>
 </div>
-<div id="sauceModal" class="sheet-modal">
-  <div class="sheet-panel">
+<div id="sauceModal" class="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="sauceModalTitle">
+  <div class="sheet-panel" tabindex="-1">
     <div class="sheet-grabber-wrap" aria-hidden="true"><div class="sheet-grabber"></div></div>
-    <div class="modal-panel-title">選擇醬料</div>
+    <div id="sauceModalTitle" class="modal-panel-title">選擇醬料</div>
     <div id="sauceItems" class="modal-items"></div>
   </div>
 </div>
-<div id="quickSearchModal" class="sheet-modal">
-  <div class="sheet-panel">
+<div id="quickSearchModal" class="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="quickSearchModalTitle">
+  <div class="sheet-panel" tabindex="-1">
     <div class="sheet-grabber-wrap" aria-hidden="true"><div class="sheet-grabber"></div></div>
-    <div class="modal-panel-title">快速搜尋</div>
+    <div id="quickSearchModalTitle" class="modal-panel-title">快速搜尋</div>
     <input id="quickSearchInput" class="modal-search-input" type="text" placeholder="搜尋主餐、加料、醬料" autocomplete="off" oninput="renderQuickSearchItems()">
     <div id="quickSearchItems" class="modal-items"></div>
   </div>
 </div>
+<script src="app.js?v=20260512b"></script>
 </body>
 </html>

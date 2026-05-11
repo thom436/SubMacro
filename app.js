@@ -135,6 +135,60 @@ const SWIPE_HINT_KEYS = {
   addon: "swipe_hint_seen_addon",
   sauce: "swipe_hint_seen_sauce"
 }
+const MODAL_IDS = ["mainModal", "addonModal", "sauceModal", "quickSearchModal"]
+
+function setModalOpenState(){
+  const hasOpenModal = MODAL_IDS.some(id => document.getElementById(id)?.style.display === "block")
+  document.body.classList.toggle("modal-open", hasOpenModal)
+}
+
+function openModal(id, focusEl = null){
+  const modal = document.getElementById(id)
+  if(!modal) return
+  modal.style.display = "block"
+  setModalOpenState()
+  const panel = modal.querySelector(".sheet-panel")
+  setTimeout(()=>{
+    if(focusEl){
+      focusEl.focus()
+    } else if(panel) {
+      panel.focus()
+    }
+  }, 10)
+}
+
+function closeModal(id){
+  const modal = document.getElementById(id)
+  if(!modal) return
+  modal.style.display = "none"
+  setModalOpenState()
+}
+
+function closeAllModals(){
+  MODAL_IDS.forEach(closeModal)
+}
+
+function makeKeyboardClickable(el){
+  if(!el || el.dataset.keyboardClickable === "1") return
+  el.dataset.keyboardClickable = "1"
+  if(!el.hasAttribute("role")) el.setAttribute("role", "button")
+  if(!el.hasAttribute("tabindex")) el.tabIndex = 0
+  el.addEventListener("keydown", (e)=>{
+    if(e.key !== "Enter" && e.key !== " ") return
+    e.preventDefault()
+    el.click()
+  })
+}
+
+document.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape"){
+    closeAllModals()
+  }
+})
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.querySelectorAll(".picker-field").forEach(makeKeyboardClickable)
+})
 
 function escapeHtml(str){
   return String(str)
@@ -418,6 +472,7 @@ function openSauce1Picker(){
 
 function flashPickerSelection(el){
   if(!el) return
+  haptic()
   el.classList.remove("picker-select-flash")
   void el.offsetWidth
   el.classList.add("picker-select-flash")
@@ -770,7 +825,7 @@ function openMainPicker(defaultGroup = ""){
 
   if(!modal || !catEl || !itemsEl) return
 
-  modal.style.display = "block"
+  openModal("mainModal", searchEl)
   catEl.innerHTML = ""
   itemsEl.innerHTML = ""
   if(searchEl) searchEl.value = ""
@@ -785,6 +840,7 @@ function openMainPicker(defaultGroup = ""){
 
   groupNames.forEach((g)=>{
     const btn = document.createElement("button")
+    btn.type = "button"
     btn.textContent = g
     styleModalCategoryButton(btn, g===selectedGroup)
 
@@ -801,7 +857,7 @@ function openMainPicker(defaultGroup = ""){
   renderMainItems(selectedGroup)
 
   modal.onclick = (e)=>{
-    if(e.target.id==="mainModal") modal.style.display="none"
+    if(e.target.id==="mainModal") closeModal("mainModal")
   }
 }
 
@@ -872,7 +928,7 @@ function renderMainItems(group){
       saveRecentItem("main", name)
       updateMainPickerLabel()
       flashPickerSelection(document.getElementById("mainPicker"))
-      document.getElementById("mainModal").style.display="none"
+      closeModal("mainModal")
       calc()
     }
 
@@ -900,7 +956,7 @@ function renderMainItems(group){
         saveRecentItem("main", name)
         updateMainPickerLabel()
         flashPickerSelection(document.getElementById("mainPicker"))
-        document.getElementById("mainModal").style.display="none"
+        closeModal("mainModal")
         calc()
       }
     )
@@ -973,7 +1029,7 @@ function openAddonPicker(defaultGroup = "", targetRow = null){
   const itemsEl = document.getElementById("addonItems")
   const searchEl = document.getElementById("addonSearch")
 
-  modal.style.display = "block"
+  openModal("addonModal", searchEl)
   catEl.innerHTML = ""
   itemsEl.innerHTML = ""
   if(searchEl) searchEl.value = ""
@@ -987,6 +1043,7 @@ function openAddonPicker(defaultGroup = "", targetRow = null){
 
   groupNames.forEach((g)=>{
     const btn = document.createElement("button")
+    btn.type = "button"
     btn.textContent = g
     styleModalCategoryButton(btn, g===selectedGroup)
 
@@ -1003,7 +1060,7 @@ function openAddonPicker(defaultGroup = "", targetRow = null){
   renderAddonItems(selectedGroup)
 
   modal.onclick = (e)=>{
-    if(e.target.id==="addonModal") modal.style.display="none"
+    if(e.target.id==="addonModal") closeModal("addonModal")
   }
 }
 
@@ -1086,14 +1143,14 @@ function renderAddonItems(group){
         setAddonValue(addonPickerTargetRow, name)
         saveRecentItem("addon", name)
         flashPickerSelection(addonPickerTargetRow.querySelector(".picker-field"))
-        document.getElementById("addonModal").style.display = "none"
+        closeModal("addonModal")
         calc()
         return
       }
       const added = addAddon(name)
       if(!added) return
       saveRecentItem("addon", name)
-      document.getElementById("addonModal").style.display = "none"
+      closeModal("addonModal")
     }
     itemsEl.appendChild(div)
   }
@@ -1108,14 +1165,14 @@ function renderAddonItems(group){
           setAddonValue(addonPickerTargetRow, name)
           saveRecentItem("addon", name)
           flashPickerSelection(addonPickerTargetRow.querySelector(".picker-field"))
-          document.getElementById("addonModal").style.display = "none"
+          closeModal("addonModal")
           calc()
           return
         }
         const added = addAddon(name)
         if(!added) return
         saveRecentItem("addon", name)
-        document.getElementById("addonModal").style.display = "none"
+        closeModal("addonModal")
       }
     )
   }
@@ -1127,18 +1184,16 @@ function openQuickSearch(){
   const modal = document.getElementById("quickSearchModal")
   const input = document.getElementById("quickSearchInput")
   if(!modal || !input) return
-  modal.style.display = "block"
+  openModal("quickSearchModal", input)
   input.value = ""
   renderQuickSearchItems()
-  setTimeout(()=> input.focus(), 10)
   modal.onclick = (e)=>{
     if(e.target.id === "quickSearchModal") closeQuickSearch()
   }
 }
 
 function closeQuickSearch(){
-  const modal = document.getElementById("quickSearchModal")
-  if(modal) modal.style.display = "none"
+  closeModal("quickSearchModal")
 }
 
 function renderQuickSearchItems(){
@@ -1430,6 +1485,7 @@ function createAddonSelect(removable = true){
 
   const display = document.createElement("div")
   display.className = "picker-field picker-field-fill picker-field--placeholder"
+  makeKeyboardClickable(display)
   display.textContent = "尚未選擇加料"
   display.onclick = (e)=>{
     e.stopPropagation()
@@ -1622,11 +1678,11 @@ function openSaucePicker(target = "sauce1"){
   if(!modal) return
 
   saucePickerTarget = target
-  modal.style.display = "block"
+  openModal("sauceModal")
   renderSauceItems()
 
   modal.onclick = (e)=>{
-    if(e.target.id === "sauceModal") modal.style.display = "none"
+    if(e.target.id === "sauceModal") closeModal("sauceModal")
   }
 }
 
@@ -1699,7 +1755,7 @@ function renderSauceItems(){
           ? document.getElementById("sauce1Picker")
           : document.querySelector("#sauce2List .sauce-row [data-role='sauce-display']")
       )
-      document.getElementById("sauceModal").style.display = "none"
+      closeModal("sauceModal")
       calc()
     }
 
@@ -1727,7 +1783,7 @@ function renderSauceItems(){
             ? document.getElementById("sauce1Picker")
             : document.querySelector("#sauce2List .sauce-row [data-role='sauce-display']")
         )
-        document.getElementById("sauceModal").style.display = "none"
+        closeModal("sauceModal")
         calc()
       }
     )
@@ -1753,6 +1809,7 @@ function createSauceSelect(){
   const display = document.createElement("div")
   display.dataset.role = "sauce-display"
   display.className = "picker-field picker-field-fill picker-field--placeholder picker-field--plus"
+  makeKeyboardClickable(display)
   display.textContent = "選擇第二種醬"
   display.onclick = (e)=>{
     e.stopPropagation()
@@ -2169,10 +2226,20 @@ function attachSwipeToDismiss(panel, closeFn) {
   const grabberWrap = panel.querySelector(".sheet-grabber-wrap")
   const itemsEl = panel.querySelector(".modal-items")
   const THRESHOLD = 88, VELOCITY = 0.42
+  let touchDragActive = false
+
+  function canStartTouchDrag(target) {
+    if (target.closest(".sheet-grabber-wrap")) return true
+    if (target.closest("input, textarea, select, button, a, [role='button'], .modal-categories")) return false
+    if (target.closest(".modal-items")) return !itemsEl || itemsEl.scrollTop <= 0
+    return true
+  }
 
   // Each drag sequence is fully self-contained — touchmove/touchend are
   // captured on document so iOS cannot intercept them mid-gesture.
   function startDrag(startClientY) {
+    if (touchDragActive) return
+    touchDragActive = true
     let currentY = startClientY
     let startTime = Date.now()
     let isDragging = false
@@ -2195,11 +2262,13 @@ function attachSwipeToDismiss(panel, closeFn) {
       document.removeEventListener("touchmove", onMove)
       document.removeEventListener("touchend",  finish)
       document.removeEventListener("touchcancel", finish)
+      touchDragActive = false
       const dy  = currentY - startClientY
       const vel = dy / Math.max(1, Date.now() - startTime)
       panel.style.transition = "transform 0.26s cubic-bezier(.22,.61,.36,1)"
       if (isDragging && (dy > THRESHOLD || vel > VELOCITY)) {
         panel.style.transform = "translateY(110%)"
+        haptic()
         setTimeout(() => { panel.style.transform = ""; panel.style.transition = ""; closeFn() }, 260)
       } else {
         panel.style.transform = ""
@@ -2212,13 +2281,14 @@ function attachSwipeToDismiss(panel, closeFn) {
     document.addEventListener("touchcancel", finish)
   }
 
+  panel.addEventListener("touchstart", (e) => {
+    if (!canStartTouchDrag(e.target)) return
+    if (e.target.closest(".sheet-grabber-wrap")) e.preventDefault()
+    startDrag(e.touches[0].clientY)
+  }, { passive: false })
+
   // ── Grabber: passive:false so e.preventDefault() is allowed ──
   if (grabberWrap) {
-    grabberWrap.addEventListener("touchstart", (e) => {
-      e.preventDefault()
-      startDrag(e.touches[0].clientY)
-    }, { passive: false })
-
     // Desktop mouse drag
     grabberWrap.addEventListener("mousedown", (e) => {
       e.preventDefault()
@@ -2244,19 +2314,15 @@ function attachSwipeToDismiss(panel, closeFn) {
     })
   }
 
-  // ── Items area: trigger when already scrolled to top ──
-  if (itemsEl) {
-    itemsEl.addEventListener("touchstart", (e) => {
-      if (itemsEl.scrollTop === 0) startDrag(e.touches[0].clientY)
-    }, { passive: true })
-  }
+  // Touch drag is handled at the panel level so title/header space and
+  // top-scrolled item lists behave like one continuous bottom sheet.
 }
 
 function initSwipeToDismiss() {
   const configs = [
-    { panelId: "mainModal",       closeFn: () => document.getElementById("mainModal").style.display = "none" },
-    { panelId: "addonModal",      closeFn: () => document.getElementById("addonModal").style.display = "none" },
-    { panelId: "sauceModal",      closeFn: () => document.getElementById("sauceModal").style.display = "none" },
+    { panelId: "mainModal",       closeFn: () => closeModal("mainModal") },
+    { panelId: "addonModal",      closeFn: () => closeModal("addonModal") },
+    { panelId: "sauceModal",      closeFn: () => closeModal("sauceModal") },
     { panelId: "quickSearchModal",closeFn: () => closeQuickSearch() },
   ]
   configs.forEach(({ panelId, closeFn }) => {
@@ -2280,6 +2346,7 @@ function updateResultVisibility(){
     resultEl.style.visibility = "hidden"
     resultEl.style.pointerEvents = "none"
     shell?.classList.remove("has-result")
+    document.body.classList.remove("has-result")
     return
   }
 
@@ -2287,6 +2354,7 @@ function updateResultVisibility(){
   resultEl.style.visibility = "visible"
   resultEl.style.pointerEvents = "auto"
   shell?.classList.add("has-result")
+  document.body.classList.add("has-result")
 }
 
 
@@ -2337,14 +2405,7 @@ function resetAll(){
   resultDetailsExpanded = false
   lastMainForFeedback = ""
 
-  const addonModal = document.getElementById("addonModal")
-  const mainModal = document.getElementById("mainModal")
-  const sauceModal = document.getElementById("sauceModal")
-  const quickSearchModal = document.getElementById("quickSearchModal")
-  if(addonModal) addonModal.style.display = "none"
-  if(mainModal) mainModal.style.display = "none"
-  if(sauceModal) sauceModal.style.display = "none"
-  if(quickSearchModal) quickSearchModal.style.display = "none"
+  closeAllModals()
 
   updateAddonUI()
   updateSectionClearButtons()

@@ -716,30 +716,42 @@ body.swipe-dragging {
   transform: translateX(-10px);
   width: 56px;
   height: 100%;
-  border-radius: 28px;
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.44);
   background:
     linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(230,236,245,0.18) 100%),
     radial-gradient(120% 120% at 8% -20%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 62%);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.62);
-  color: rgba(52,60,73,0.92);
-  font-size: 17px;
-  font-weight: 420;
-  letter-spacing: 0.005em;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   backdrop-filter: blur(22px) saturate(146%);
   -webkit-backdrop-filter: blur(22px) saturate(146%);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.18s ease, width 0.18s ease, transform 0.18s ease;
+  transition: opacity 0.18s ease, width 0.08s ease, padding-left 0.14s ease,
+              background 0.16s ease, border-radius 0.14s ease;
   z-index: 2;
   overflow: hidden;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 12px;
+  justify-content: flex-end;
+  padding: 0 16px;
   --clearLabelOpacity: 0;
-  color: rgba(52,60,73,var(--clearLabelOpacity));
+  color: rgba(199,58,51,var(--clearLabelOpacity));
+}
+
+/* Commit state: full row width, label left-aligned, intense red */
+.swipe-clear-btn.swipe-commit {
+  justify-content: flex-start;
+  padding-left: 22px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #e03428 0%, #c73a33 100%);
+  border-color: rgba(255,120,100,0.4);
+  box-shadow: inset 0 1px 0 rgba(255,200,190,0.3), 0 2px 12px rgba(199,58,51,0.35);
+  --clearLabelOpacity: 1;
+  color: #fff;
 }
 
 .swipe-row.swipe-dragging .swipe-clear-btn {
@@ -1467,8 +1479,14 @@ input[type="checkbox"]:active {
       linear-gradient(180deg, rgba(106,110,118,0.4) 0%, rgba(82,86,95,0.34) 100%),
       radial-gradient(120% 120% at 8% -20%, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 62%);
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
-    color: rgba(243,244,246,0.94);
+    color: rgba(255,100,88,var(--clearLabelOpacity));
     --clearLabelOpacity: 0;
+  }
+  .swipe-clear-btn.swipe-commit {
+    background: linear-gradient(135deg, #d93025 0%, #b52d22 100%);
+    border-color: rgba(255,120,100,0.3);
+    box-shadow: inset 0 1px 0 rgba(255,180,170,0.2), 0 2px 12px rgba(185,45,35,0.45);
+    color: #fff;
   }
 
   .footer-inline-link {

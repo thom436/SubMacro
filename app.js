@@ -525,26 +525,35 @@ function attachSwipeToReveal(row, onSwipeAction, canSwipe){
   let rowWidth = 0
 
   const setSwipeVisual = (translateX)=>{
-    const next = Math.max(-maxDrag, Math.min(0, translateX))
+    const next = Math.max(-(rowWidth + 20), Math.min(0, translateX))
     lastTranslate = next
     picker.style.transform = `translateX(${next}px)`
-    const dragDistance = Math.abs(next)
-    const progressToReveal = revealWidth > 0 ? Math.min(1, dragDistance / revealWidth) : 0
-    const extraAfterReveal = Math.max(0, dragDistance - revealWidth)
+    const drag = Math.abs(next)
+    const commitPoint = rowWidth * 0.50
 
-    let clearWidth = minClearWidth + ((settleClearWidth - minClearWidth) * progressToReveal)
-    if(extraAfterReveal > 0){
-      clearWidth = settleClearWidth + (extraAfterReveal * 1.08)
+    // Phase 1: 0 → revealWidth: proportional grow
+    // Phase 2: revealWidth → commitPoint: continue growing toward full row
+    // Phase 3: commitPoint+: snap to full row width (commit state)
+    let clearWidth
+    const isCommit = drag >= commitPoint
+    if(drag <= revealWidth){
+      clearWidth = (drag / revealWidth) * settleClearWidth
+    } else if(!isCommit){
+      const ratio = (drag - revealWidth) / Math.max(1, commitPoint - revealWidth)
+      clearWidth = settleClearWidth + ratio * (rowWidth - settleClearWidth)
+    } else {
+      clearWidth = rowWidth
     }
-    clearWidth = Math.max(0, Math.min(maxClearWidth, clearWidth))
+    clearWidth = Math.max(0, clearWidth)
 
-    const bgOpacity = dragDistance < 14 ? 0 : Math.min(1, (dragDistance - 14) / 22)
-    const labelOpacity = dragDistance < 36 ? 0 : Math.min(1, (dragDistance - 36) / 20)
+    const bgOpacity = drag < 14 ? 0 : Math.min(1, (drag - 14) / 22)
+    const labelOpacity = drag < 36 ? 0 : Math.min(1, (drag - 36) / 20)
 
     actionBtn.style.opacity = String(bgOpacity)
     actionBtn.style.width = `${clearWidth}px`
     actionBtn.style.setProperty("--clearLabelOpacity", labelOpacity.toFixed(3))
     actionBtn.style.transform = "translateX(0)"
+    actionBtn.classList.toggle("swipe-commit", isCommit)
   }
 
   const onStart = (clientX, clientY)=>{
@@ -559,8 +568,8 @@ function attachSwipeToReveal(row, onSwipeAction, canSwipe){
     settleClearWidth = Math.max(minClearWidth + 12, Math.round(rowHeight * 1.48))
     maxClearWidth = Math.max(settleClearWidth + 24, Math.min(Math.round(rowWidth * 0.76), Math.round(rowHeight * 4.1)))
     revealWidth = Math.max(settleClearWidth + 10, Math.round(rowHeight * 1.74))
-    maxDrag = Math.max(revealWidth + 42, Math.round(rowWidth + 44))
-    deleteThreshold = Math.min(maxDrag - 10, Math.max(revealWidth + 42, Math.round(rowWidth * 0.56)))
+    maxDrag = rowWidth + 20
+    deleteThreshold = Math.round(rowWidth * 0.50)   // trigger at 50%
     settleThreshold = Math.max(42, Math.round(revealWidth * 0.56))
     actionBtn.style.height = `${rowHeight}px`
 

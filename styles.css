@@ -712,11 +712,11 @@ body.swipe-dragging {
 .swipe-clear-btn {
   position: absolute;
   right: 0;
-  top: 0;
-  bottom: 0;
+  top: 4px;
+  bottom: 4px;
   transform: translateX(-10px);
   width: 56px;
-  height: 100%;
+  height: auto;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.44);
   background:
@@ -1633,6 +1633,8 @@ body {
   border: none;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05);
   overflow: hidden;
+  isolation: isolate;
+  position: relative;
 }
 
 .section-head {
@@ -1758,8 +1760,8 @@ body {
 
 .sheet-panel {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 8px;
+  right: 8px;
   bottom: 0;
   height: min(76vh, 680px);
   display: flex;
@@ -1808,6 +1810,7 @@ body {
   justify-content: center;
   cursor: grab;
   -webkit-tap-highlight-color: transparent;
+  touch-action: none;
 }
 .sheet-grabber-wrap:active {
   cursor: grabbing;

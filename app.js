@@ -1496,7 +1496,6 @@ function createAddonSelect(removable = true){
   wrapper.dataset.swipeHintType = "addon"
 
   wrapper.style.display = "block"
-  wrapper.style.marginTop = "8px"
   wrapper.style.position = "relative"
   wrapper.style.overflow = "hidden"
 
@@ -1572,7 +1571,6 @@ function addAddon(defaultValue = ""){
   setAddonValue(wrapper, defaultValue)
 
   container.appendChild(wrapper)
-  updateAddonRowSpacing()
   animateRowEnter(wrapper)
   flashPickerSelection(wrapper.querySelector(".picker-field"))
   // First addon ever — show peek hint so user discovers swipe-to-delete
@@ -1583,26 +1581,17 @@ function addAddon(defaultValue = ""){
   return true
 }
 
-function updateAddonRowSpacing(){
-  const rows = document.querySelectorAll("#addonList .addon-row")
-  rows.forEach((row, idx)=>{
-    row.style.marginTop = idx === 0 ? "6px" : "8px"
-  })
-}
-
 function updateAddonUI(){
   const count = document.querySelectorAll("#addonList .addon-row").length
   const label = document.getElementById("addonLabel")
   const emptyPicker = document.getElementById("addonEmptyPicker")
-  label.textContent = `Add-ons (${count})`
+  label.textContent = count > 0 ? `Add-ons (${count})` : "Add-ons"
   if(emptyPicker){
     emptyPicker.style.display = "flex"
-    emptyPicker.style.marginTop = count === 0 ? "6px" : "8px"
     emptyPicker.textContent = count === 0 ? "加入加料" : "再加一項"
     emptyPicker.classList.toggle("picker-field--placeholder", count === 0)
     emptyPicker.classList.add("picker-field--plus")
   }
-  updateAddonRowSpacing()
   updateSectionClearButtons()
   refreshSwipeValueFlags()
   updateSwipeHints()
@@ -1811,7 +1800,7 @@ function renderSauceItems(){
 
 function createSauceSelect(){
   const wrapper = document.createElement("div")
-  wrapper.className = "sauce-row"
+  wrapper.className = "sauce-row stack-gap"
   wrapper.classList.add("swipe-row")
   wrapper.dataset.swipeHintType = "sauce"
   wrapper.onclick = ()=>{
@@ -1820,7 +1809,6 @@ function createSauceSelect(){
   }
 
   wrapper.style.display = "block"
-  wrapper.style.marginTop = "8px"
   wrapper.style.position = "relative"
 
   const display = document.createElement("div")

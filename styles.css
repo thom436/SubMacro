@@ -17,16 +17,27 @@
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
+  --page-bg: #F2F2F7;
+  --html-bg: #F2F2F7;
+  --result-surface: #FFFFFF;
+  --result-text: #1C1C1E;
+  --result-border: rgba(60, 60, 67, 0.14);
+  --result-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --result-muted: #6E6E73;
+  --result-chevron: rgba(60, 60, 67, 0.42);
+  --result-chevron-hover: rgba(28, 28, 30, 0.72);
+  --result-row-active: rgba(0, 0, 0, 0.05);
+  --result-breakdown: #8E8E93;
 }
 
 html {
-  background: #1b1f26;
+  background: var(--html-bg);
   overflow-x: hidden;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
-  background: #F2F2F7;
+  background: var(--page-bg);
   margin: 0;
   padding: 14px 20px 20px;
   color: #1C1C1E;
@@ -903,14 +914,14 @@ body.swipe-dragging {
   left: 20px;
   right: 20px;
   z-index: 9999;
-  background: #1C1C1E;
+  background: var(--result-surface);
   padding: 18px;
   border-radius: 24px;
   font-size: 18px;
   font-weight: 600;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12);
-  color: #F2F2F7;
-  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: var(--result-shadow);
+  color: var(--result-text);
+  border: 1px solid var(--result-border);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   overflow: hidden;
@@ -1096,7 +1107,7 @@ button:active {
 .result-detail-btn {
   border: none;
   background: transparent;
-  color: rgba(255,255,255,0.5);
+  color: var(--result-chevron);
   border-radius: 8px;
   min-width: 20px;
   height: 20px;
@@ -1120,11 +1131,11 @@ button:active {
 }
 
 .result-summary-toggle:hover {
-  color: rgba(255,255,255,0.72);
+  color: var(--result-chevron-hover);
 }
 
 .result-summary-toggle:active {
-  background: rgba(255,255,255,0.06);
+  background: var(--result-row-active);
 }
 
 .result-summary-text {
@@ -1133,13 +1144,21 @@ button:active {
   font-size: 12px;
   line-height: 1.45;
   letter-spacing: 0.01em;
-  color: #6e6e73;
+  color: var(--result-muted);
   overflow: hidden;
   pointer-events: none;
 }
 
 .result-summary-efficiency {
-  color: #6e6e73;
+  color: var(--result-muted);
+}
+
+.result-breakdown-line {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--result-breakdown);
+  line-height: 1.56;
+  letter-spacing: 0.01em;
 }
 
 .result-summary-toggle .result-detail-icon {
@@ -1340,6 +1359,24 @@ input[type="checkbox"]:active {
 }
 
 @media (prefers-color-scheme: dark) {
+  :root {
+    --page-bg: #0b1119;
+    --html-bg: #070a0f;
+    --result-surface: #1C1C1E;
+    --result-text: #F2F2F7;
+    --result-border: rgba(255, 255, 255, 0.12);
+    --result-shadow: none;
+    --result-muted: #A5AFBF;
+    --result-chevron: #A5AFBF;
+    --result-chevron-hover: #C2CAD8;
+    --result-row-active: rgba(255, 255, 255, 0.08);
+    --result-breakdown: #9BA3B2;
+  }
+
+  html {
+    background: var(--html-bg);
+  }
+
   body {
     background:
       radial-gradient(circle at 72% 42%, rgba(85,144,105,0.28) 0%, rgba(85,144,105,0.14) 18%, rgba(85,144,105,0) 38%),
@@ -1374,16 +1411,6 @@ input[type="checkbox"]:active {
 
   select:hover {
     background: #3a3d45;
-  }
-
-  .result {
-    background: #1C1C1E;
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 28px;
-    color: #F2F2F7;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
   }
 
   label {
@@ -1608,24 +1635,6 @@ input[type="checkbox"]:active {
 
   .result-copy-btn:active {
     background: rgba(106,108,113,0.58);
-  }
-
-  .result-detail-btn {
-    background: transparent;
-    border: none;
-    color: #a5afbf;
-  }
-
-  .result-summary-text {
-    color: #a5afbf;
-  }
-
-  .result-summary-toggle:hover {
-    color: #c2cad8;
-  }
-
-  .result-summary-toggle:active {
-    background: rgba(255,255,255,0.08);
   }
 
   .minus-btn {
@@ -2201,11 +2210,12 @@ body.has-result {
   }
 
   .result {
+    --result-surface: rgba(42, 47, 56, 0.56);
+    --result-border: rgba(230, 238, 250, 0.24);
+    --result-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 18px 52px rgba(0, 0, 0, 0.4);
     background:
       linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 48%, rgba(136,151,110,0.12) 100%),
-      rgba(42,47,56,0.56);
-    border: 1px solid rgba(230,238,250,0.24);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 18px 52px rgba(0,0,0,0.4);
+      var(--result-surface);
     backdrop-filter: blur(32px) saturate(150%);
     -webkit-backdrop-filter: blur(32px) saturate(150%);
   }

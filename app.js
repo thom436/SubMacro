@@ -2078,7 +2078,7 @@ function showResultStats(summaryText, breakdownHtml, options = {}){
   </button>
 </div>
 <div id="breakdownWrap" style="display:none;">
-  <div id="breakdownLine" style="margin-top:10px;font-size:13px;color:#8e8e93;line-height:1.56;letter-spacing:0.01em;"></div>
+  <div id="breakdownLine" class="result-breakdown-line"></div>
 </div>`
     resultMode = "stats"
     resultDetailsExpanded = false
